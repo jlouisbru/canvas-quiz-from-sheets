@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (though for an Apps Script project, versioning might be more date-based or feature-based initially).
 
-## [1.0.0] - 2025-05-22 
+## [1.0.0] - YYYY-MM-DD 
+
+*(Replace YYYY-MM-DD with today's date for the initial release)*
 
 ### Added
 
@@ -63,3 +65,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 *   Canvas API Token is prompted for on first use if not provided and stored in user-scoped Script Properties.
+
+---
+
+## [Unreleased]
+
+### Added
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security

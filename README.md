@@ -137,3 +137,13 @@ Instructional Assistant Professor at [Chapman University](https://www.chapman.ed
 ## 🤝 Contributing
 
 Contributions are welcome! [Thank you so much for your support!](https://ko-fi.com/louisfr)
+
+## 🐛 Issues and Feedback
+
+Found a bug or have a suggestion to improve Canvas Tools? We'd love to hear from you!
+
+[![Report Bug](https://img.shields.io/badge/Report-Bug-red?style=for-the-badge&logo=github)](https://github.com/jlouisbru/canvas-quiz-from-sheets/issues/new?template=bug_report.yml)
+[![Request Feature](https://img.shields.io/badge/Request-Feature-blue?style=for-the-badge&logo=github)](https://github.com/jlouisbru/canvas-quiz-from-sheets/issues/new?template=feature_request.yml)
+[![View Issues](https://img.shields.io/badge/View-Issues-green?style=for-the-badge&logo=github)](https://github.com/jlouisbru/canvas-quiz-from-sheets/issues)
+
+---

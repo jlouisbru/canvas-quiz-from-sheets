@@ -1,0 +1,114 @@
+name: 🐛 Bug Report
+description: Create a report to help us improve the Canvas Quiz Creator for Google Sheets.
+title: "[Bug]: "
+labels: ["bug", "needs triage"]
+assignees:
+  - jlouisbru # Assign to yourself, or leave blank
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to fill out this bug report! 
+        Please provide as much detail as possible.
+
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: Prerequisites
+      description: Please confirm the following before submitting.
+      options:
+        - label: I have searched the existing [issues](https://github.com/jlouisbru/canvas-quiz-from-sheets/issues) to ensure this bug has not already been reported.
+          required: true
+        - label: I am using the latest version of the script (or have specified the version I am using).
+          required: true
+        - label: I have reviewed the [README](https://github.com/jlouisbru/canvas-quiz-from-sheets/blob/main/README.md) and "Instructions" sheet for setup and usage.
+          required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the Bug
+      description: A clear and concise description of what the bug is.
+      placeholder: "When I click 'Create Quiz on Canvas' after setting up X, Y happens instead of Z."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Please provide detailed steps to reproduce the behavior.
+      placeholder: |
+        1. Go to 'SelectQuestions_Config' and set Sheet Name to 'TF' with 10 questions.
+        2. Click on 'Extra Menu > Select Questions'.
+        3. Go to 'CanvasQuiz_Config' and set COURSE_ID to '12345'.
+        4. Click 'Extra Menu > Create Quiz on Canvas'.
+        5. See error...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: A clear and concise description of what you expected to happen.
+      placeholder: "I expected a quiz to be created in Canvas with 10 TF questions."
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: A clear and concise description of what actually happened. Include any error messages.
+      placeholder: "The script showed an alert: 'Error: Canvas API connection failed...' or The quiz was created but all questions were Essay type."
+    validations:
+      required: true
+
+  - type: input
+    id: script-version
+    attributes:
+      label: Script Version (if not latest)
+      description: If you are not using the latest version from the main branch, please specify the version or commit hash.
+      placeholder: "e.g., v1.0.0, or commit abc123xyz"
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or Screencasts
+      description: If applicable, add screenshots or a link to a short video to help explain your problem.
+      placeholder: "You can drag and drop images here or link to a video."
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment (if relevant)
+      description: Please provide any relevant information about your environment.
+      placeholder: |
+        - Browser: [e.g., Chrome 105, Firefox 103]
+        - Operating System: [e.g., Windows 10, macOS Monterey]
+        - Google Workspace Account Type: [e.g., Personal Gmail, Google Workspace Business]
+        - Canvas Instance: [e.g., self-hosted, cloud instance name]
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Log Output (if applicable)
+      description: Please copy and paste any relevant log output from **Extensions > Apps Script > Executions**. *Remove any sensitive information like API keys before pasting.*
+      render: GFM # For nice formatting of code blocks
+      placeholder: |
+        ```
+        [5:00:00 PM] Starting execution
+        [5:00:01 PM] Info: Processing sheet 'TF'...
+        [5:00:02 PM] Error: Something went wrong...
+        ```
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here.
+    validations:
+      required: false

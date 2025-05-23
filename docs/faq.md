@@ -1,95 +1,120 @@
-# Frequently Asked Questions (FAQ) - Canvas Quiz Creator for Google Sheets
+# Frequently Asked Questions - Canvas Quiz Creator for Google Sheets
 
-## getSheetByNameeneral & Setup
+## 🌟 General Questions
 
-**Q1: How do I get started with this tool?**
-A: Please refer to the main [README.md](https://github.com/jlouisbru/canvas-quiz-from-sheets/blob/main/README.md) for detailed setup instructions. The key steps are:
-    1. Make a copy of the [Google Sheet Template](<LINK_TO_YOUR_SHARED_GOOGLE_SHEET_TEMPLATE_VIEW_ONLY>). *(Remember to replace this link!)*
-    2. Open **Extensions > Apps Script** in your copied sheet.
-    3. Configure the `SelectQuestions_Config` and `CanvasQuiz_Config` sheets as per the "Instructions" tab in the Google Sheet.
-    4. Run the functions from the "Extra Menu". You'll be asked for script authorization the first time.
+### What is Canvas Quiz Creator for Google Sheets?
+Canvas Quiz Creator is a Google Sheets tool that connects with Canvas LMS. It helps educators manage question banks within Google Sheets and then use those questions to automatically create quizzes directly in their Canvas courses.
 
-**Q2: The script is asking for a lot of permissions. Is it safe?**
-A: Yes, the script requires these permissions to function:
-    *   **View and manage your spreadsheets in Google Drive:** Needed to read your configuration sheets (e.g., `SelectQuestions_Config`, `CanvasQuiz_Config`), your question bank sheets, and to write to the `Selected Questions` sheet.
-    *   **Connect to an external service:** Needed to communicate with the Canvas API to create quizzes.
-    *   **Display and run third-party web content in prompts and sidebars:** Used for displaying `toast` messages and potentially other UI elements.
-    The code is open source on GitHub, so you can review what it does. When you make a copy of the Google Sheet, the script becomes *your* copy, running under your authority.
+### Is this tool free to use?
+Yes, Canvas Quiz Creator for Google Sheets is completely free and open-source under the MIT License.
 
-**Q3: Where do I get a Canvas API Token?**
-A: In your Canvas instance:
-    1. Go to **Account** (usually your profile picture in the sidebar).
-    2. Click on **Settings**.
-    3. Scroll down to **Approved Integrations**.
-    4. Click the **"+ New Access Token"** button.
-    5. Give it a purpose (e.g., "Google Sheets Quiz Creator") and an expiration date (optional, but recommended for security).
-    6. Click **"Generate Token"**.
-    7. **Important:** Copy the generated token immediately. You will NOT be able to see it again.
-    The script will prompt you for this token if it's not found in the `CanvasQuiz_Config` sheet or your Script Properties. It will then store it securely in your Script Properties for future use.
+## 🚀 Setup Questions
 
-**Q4: Do I need to know how to code to use this?**
-A: No! The tool is designed to be used through the Google Sheets interface and its configuration sheets. You only need to interact with the Apps Script code if you want to customize it or contribute to its development.
+### Do I need to know programming to use this tool?
+No! It's designed for educators with no programming experience. Simply make a copy of our [Google Sheet Template](<LINK_TO_YOUR_SHARED_GOOGLE_SHEET_TEMPLATE_VIEW_ONLY>) *(<-- Replace this link!)* and follow the "Instructions" tab within it to get started.
 
-## ❓ Question Selection (`SelectQuestions_Config`)
+### How do I find my Canvas Course ID?
+Your Course ID is a number that appears in the URL when you are viewing your course page in Canvas. For example, in `https://yourschool.instructure.com/courses/12345`, the Course ID is `12345`.
 
-**Q5: Why aren't any questions being selected into the "Selected Questions" sheet?**
-A: Check the following in your `SelectQuestions_Config` sheet and your question bank sheets:
-    *   **Include Checkbox:** Is the "Include" box checked for the source sheets you want to use?
-    *   **Sheet Name:** Does the "Sheet Name" in `SelectQuestions_Config` *exactly* match the actual tab name of your question bank sheet (case-sensitive)?
-    *   **Lecture Range:** Are your `Lecture Range Min` and `Lecture Range Max` values set correctly for the lecture numbers/IDs in your question bank? If a question's lecture value falls outside this range, it won't be selected.
-    *   **"Do not pick" Column:** In your question bank sheet, ensure the "Do not pick" column is not checked for questions you want to be eligible.
-    *   **Sufficient Questions:** Do you have enough questions in your source sheets that meet all criteria (lecture range, not marked "Do not pick") to fulfill the "Total Questions from Sheet" and "Questions per Lecture" settings?
-    *   **Logs:** Check **Extensions > Apps Script > Executions** for any specific error messages or warnings.
+### How do I get a Canvas API Token?
+1.  In Canvas, go to **Account** (your profile) > **Settings**.
+2.  Scroll down to **Approved Integrations** (you might need to enable this feature if it's your first time or if your institution manages it).
+3.  Click **"+ New Access Token"**.
+4.  Give it a "Purpose" (e.g., "Google Sheets Quiz Tool") and an optional "Expires" date (leaving it blank means it won't expire, but setting an expiration is good practice).
+5.  Click **"Generate Token"**.
+6.  **Copy the generated token immediately.** You will not be able to see it again after navigating away from that page.
+The script will prompt you for this token if it's not found in the `CanvasQuiz_Config` sheet or your Script Properties. It will then store it securely in your Script Properties.
 
-**Q6: What does "Do Not Pick Again" do?**
-A: If you check the "Do Not Pick Again" box in `SelectQuestions_Config` for a particular source sheet, any questions selected from that sheet will then have their own "Do not pick" checkbox automatically checked in that original source sheet. This helps prevent you from selecting the same questions repeatedly for different quizzes. It uses the `ID` column to match questions.
+### What permissions does the script need when I first run it?
+When you first run a function from the "Extra Menu," Google will ask for authorization. The script needs permission to:
+*   **View and manage your spreadsheets in Google Drive:** To read your configuration sheets (`SelectQuestions_Config`, `CanvasQuiz_Config`), your question bank sheets, and to write to/clear the `Selected Questions` sheet.
+*   **Connect to an external service:** This is required to communicate with the Canvas API to create quizzes in your Canvas course.
+*   **Display and run third-party web content in prompts and sidebars:** Used for displaying `toast` messages (brief notifications) and dialogs (like the summary pop-ups).
+The code is open-source on GitHub, so you can review what it does. By making a copy of the Google Sheet, the script becomes *your* copy and runs under your authority.
 
-## 캔버스 Canvas Quiz Creation (`CanvasQuiz_Config`)
+## 🛠️ Usage Questions
 
-**Q7: My quiz wasn't created on Canvas / I got an API error. What should I check?**
-A: Common issues include:
-    *   **`CANVAS_API_URL`:** Ensure this is your base Canvas URL (e.g., `https://yourschool.instructure.com`) and does **NOT** end with `/api/v1`.
-    *   **`CANVAS_API_TOKEN`:** Is the token correct and still valid (not expired)? If you left it blank, ensure you entered it correctly when prompted.
-    *   **`COURSE_ID`:** Is this the correct numerical ID for your Canvas course? You find it in the URL of your course page (e.g., `.../courses/12345`).
-    *   **Canvas Permissions:** Does the user whose API token you're using have permission to create quizzes in that course?
-    *   **Logs:** Check **Extensions > Apps Script > Executions** for detailed error messages from the Canvas API. These often provide clues.
+### How do I select which questions go into a Canvas quiz?
+The process involves two main steps using the "Extra Menu":
+1.  **Configure `SelectQuestions_Config`:** Specify which of your "Question Bank Sheets" (e.g., "TF", "MC") to use, how many questions to pull from each, filter by lecture range, etc.
+2.  Run **Extra Menu > Select Questions**. This action reads your configurations and populates the `Selected Questions` sheet with a random selection of questions.
+3.  **Configure `CanvasQuiz_Config`:** Set your Canvas URL, Course ID, desired Quiz Title, and points per question type. Ensure the `SHEET_NAME` parameter points to `Selected Questions` (or whichever sheet holds the questions you want to upload).
+4.  Run **Extra Menu > Create Quiz on Canvas**. This takes the questions from the specified sheet and builds the quiz in Canvas.
 
-**Q8: The points for my questions are wrong in Canvas, or a question type is incorrect.**
-A:
-    *   **Points:** Check your `CanvasQuiz_Config` sheet. Ensure `POINTS_PER_QUESTION_TF`, `_MC`, `_ES`, and `_DEFAULT` are set to the correct numeric values. The script uses the prefix of the `ID` column (e.g., "TF_", "MC_", "ES_") in your `Selected Questions` sheet to determine which point value to apply.
-    *   **Question Type:**
-        *   IDs starting with `TF` become "True/False" questions.
-        *   IDs starting with `MC` become "Multiple Choice" (or "Multiple Answers" if the `Correct Answer` column has comma-separated letters like `A,C`).
-        *   IDs starting with `ES` become "Essay" questions.
-        *   If an `ID` doesn't have one of these prefixes, it will likely default to "Multiple Choice" or "Multiple Answers" based on the `Correct Answer` format.
+### Can I use this tool for multiple Canvas courses?
+Yes. The most straightforward way is to have a separate copy of this Google Spreadsheet for each Canvas course. This keeps the `CanvasQuiz_Config` (especially the `COURSE_ID`) distinct for each course.
 
-**Q9: My True/False questions are all defaulting to "True" as the correct answer in Canvas.**
-A: This usually happens if the `Correct Answer` column in your `Selected Questions` (or source) sheet for TF questions is not being interpreted correctly as boolean `true` or `false`, or the string "TRUE" or "FALSE".
-    *   Ensure the `Correct Answer` column for TF questions in your sheet contains the word `TRUE` or `FALSE` (case-insensitive, boolean values from checkboxes are also fine).
-    *   The script is designed to convert these to uppercase "TRUE" or "FALSE" and set the Canvas question accordingly. If issues persist, check the script logs for how it's processing the `correctAnswerFromSheet` value for those TF questions.
+### Are quizzes published to students immediately after creation?
+No. The script creates all quizzes in Canvas as **UNPUBLISHED**. This is a safety measure, allowing you to go into your Canvas course, review the quiz settings, question content, and points, and then manually publish it when you are ready for students to access it.
 
-**Q10: My Multiple Choice questions are being skipped with "No valid answer options found."**
-A: This means the script could not find text in the `Option A`, `Option B`, etc., columns for those MC question rows in your `Selected Questions` sheet.
-    *   Verify that your MC questions have their answer choice text filled into these option columns.
-    *   Ensure the column headers (`Option A`, `Option B`, etc.) in your `Selected Questions` sheet exactly match the constants defined in the script (`COL_OPTION_A`, `COL_OPTION_B`, etc.).
+### What types of questions can I create in Canvas with this tool?
+The script currently supports creating the following Canvas question types based on the `ID` prefix in your question sheets:
+*   `TF...`: Becomes a **True/False** question in Canvas.
+*   `MC...`: Becomes a **Multiple Choice** question (or **Multiple Answers** if your `Correct Answer` column for that MC question contains comma-separated letters like `A,C`).
+*   `ES...`: Becomes an **Essay Question** in Canvas.
+*   Other prefixes: Will default to Multiple Choice/Multiple Answers based on `Correct Answer` format, using `POINTS_PER_QUESTION_DEFAULT`.
 
-**Q11: Where is the quiz in Canvas after the script runs?**
-A: The quiz is created as **UNPUBLISHED** in the Canvas course you specified by `COURSE_ID`. You need to go to your course in Canvas, find the quiz (usually under "Quizzes"), review it, and then publish it manually for students to see.
+### How are points assigned to questions in the Canvas quiz?
+Points are assigned based on your settings in the `CanvasQuiz_Config` sheet and the `ID` prefix of each question:
+*   `POINTS_PER_QUESTION_TF` for questions with IDs starting with `TF`.
+*   `POINTS_PER_QUESTION_MC` for questions with IDs starting with `MC`.
+*   `POINTS_PER_QUESTION_ES` for questions with IDs starting with `ES`.
+*   `POINTS_PER_QUESTION_DEFAULT` for any other questions.
 
-## 💻 Script & Code
+### What if my True/False questions are showing up as "Multiple Choice" in Canvas or the wrong answer is selected?
+This script is designed to create actual "True/False" type questions in Canvas.
+*   Ensure your question IDs start with `TF`.
+*   Ensure the `Correct Answer` column in your Google Sheet for these TF questions contains the word `TRUE` or `FALSE` (boolean values from checkboxes are also handled correctly).
+If issues persist, check the script execution logs for messages about how the `correctAnswerFromSheet` value was processed for those TF questions.
 
-**Q12: Can I modify the script code?**
-A: Yes, it's Google Apps Script (JavaScript). You can access it via **Extensions > Apps Script**. However, be cautious when making changes unless you are familiar with JavaScript and Apps Script, as incorrect modifications can break its functionality. It's recommended to make a backup copy of your spreadsheet (and thus the bound script) before making significant code changes.
+### My Multiple Choice questions are being skipped with an error like "No valid answer options found." Why?
+This error means the script could not find any text in your `Option A`, `Option B`, through `Option F` columns for those specific MC question rows in the sheet being used to create the Canvas quiz (usually `Selected Questions`).
+*   **Verify:** Do these MC question rows have their answer choice text filled into these option columns (e.g., `Option A` has "Paris", `Option B` has "London")?
+*   **Column Headers:** Are the column headers in your question sheet *exactly* `Option A`, `Option B`, etc., matching the constants defined in the script?
 
-**Q13: How do I get updates to the script if you release a new version?**
-A: Since you make a copy of the Google Sheet, your script is independent. To get updates:
-    1. You would need to check the [GitHub repository](https://github.com/jlouisbru/canvas-quiz-from-sheets) for new versions.
-    2. If there's a new version, you would typically need to manually copy the updated code from the new `.gs` files on GitHub into your Apps Script editor, replacing your existing code.
-    3. Alternatively, if you use `clasp`, you could pull the latest changes from the GitHub repository to your local machine and then `clasp push` them to your script project.
-    Review the `CHANGELOG.md` for details on what changed in new versions.
+## 🔒 Technical & Security Questions
+
+### How secure is my Canvas API Token?
+Your Canvas API Token is stored securely in **Script Properties**. This storage is specific to your copy of the spreadsheet and your Google account. It is not visible to others if you share the spreadsheet file with "View" access. Only users with "Edit" access to your spreadsheet *and* the ability to open the Apps Script editor could potentially access Script Properties (this is standard Apps Script behavior).
+
+### What data does this tool access from my Google Sheets?
+The script reads data from:
+*   Your configuration sheets (`SelectQuestions_Config`, `CanvasQuiz_Config`).
+*   Your question bank sheets (as specified in `SelectQuestions_Config`).
+*   The `Selected Questions` sheet (or as specified in `CanvasQuiz_Config` for uploads).
+It writes data to:
+*   The `Selected Questions` sheet (clearing and populating it).
+*   Potentially your source question bank sheets if you enable the "Do Not Pick Again" feature (it checks the "Do not pick" box).
+
+### What data does this tool send to Canvas?
+To create a quiz, the script sends:
+*   Quiz settings like title and total points (though total points are often recalculated by Canvas based on added questions).
+*   For each question: its text, type, points, and for MC/TF questions, the answer options and which one(s) are correct.
+The script **does not** pull any student data, grades, or other course content *from* Canvas with its current features.
+
+## ⚖️ Privacy & Compliance Questions (General Guidance)
+
+*(Disclaimer: This information is for guidance only and not legal advice. Always consult your institution's policies regarding data handling and third-party tools.)*
+
+### Is this tool FERPA (or similar privacy regulation) compliant?
+This tool acts as a bridge between two systems you already use and are authorized to access: Google Workspace (for Google Sheets) and Canvas LMS.
+*   It transfers data (your question content) from your Google Sheet to your Canvas course.
+*   It does not store your question data or Canvas data on any third-party servers outside of Google and Canvas.
+*   It uses secure API connections (HTTPS) for communication with Canvas.
+
+You, as the educator, are responsible for ensuring that your use of any tool, including this one, complies with your institution's specific data privacy policies, FERPA, GDPR, or other applicable regulations. This includes how you manage and share the Google Sheet containing your question data.
+
+### Who can see the question data in my Google Sheet?
+Anyone you explicitly share your Google Sheet with will be able to see its content, including your question banks and configurations. Ensure you only share your spreadsheet with authorized individuals who have a legitimate educational reason to access this information, adhering to your institution's data handling policies.
+
+### Do I need special permission from my institution to use this tool?
+While this tool leverages standard functionalities of Google Workspace and the Canvas API (which your institution already provides), it's always a good practice to be aware of your institution's policies regarding:
+*   Use of third-party or custom scripts that interact with the LMS.
+*   Generating Canvas API tokens and their approved uses.
+Some institutions may have review processes for tools that access LMS data, even if the access is initiated by an authorized faculty member. When in doubt, check with your IT department or instructional technology support team.
 
 ---
 
-**Remember to replace `<LINK_TO_YOUR_SHARED_GOOGLE_SHEET_TEMPLATE_VIEW_ONLY>` with the actual link!**
+**Remember to replace `<LINK_TO_YOUR_SHARED_GOOGLE_SHEET_TEMPLATE_VIEW_ONLY>` with the actual link to your Google Sheet template!**
 
-You can add more questions as they come up or as you anticipate user needs. This should be a solid starting point.
+This version should align well with the style you showed and provide clear, concise answers for users of your "Canvas Quiz Creator for Google Sheets."

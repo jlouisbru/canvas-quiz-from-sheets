@@ -1,4 +1,4 @@
-# Google Sheets Quiz Management & Canvas Uploader
+# Create Canvas Quiz From Google Sheets
 
 ![Spreadsheet Example](link_to_an_image_of_your_spreadsheet_interface.png) <!-- Optional: Add a nice screenshot -->
 

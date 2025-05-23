@@ -136,8 +136,13 @@ Please make sure to update tests as appropriate and follow the existing code sty
 ## License
 
 This project is licensed under the [MIT License](LICENSE) - see the `LICENSE` file for details.
-*(Choose a license you prefer - MIT is common and permissive)*
 
-## Acknowledgements
+## 👤 Author
 
-*   (Optional: Anyone you want to thank or any libraries/inspirations)
+[Jean-Louis Bru, Ph.D.](https://www.jlouisbru.com/)
+
+Instructional Assistant Professor at [Chapman University](https://www.chapman.edu/)
+
+## 🤝 Contributing
+
+Contributions are welcome! [Thank you so much for your support!](https://ko-fi.com/louisfr)

@@ -27,22 +27,25 @@ This Google Apps Script project streamlines the process of selecting questions f
     *   Progress indicators and completion summaries.
 *   **Instruction Sheet:** Includes a detailed "Instructions" tab within the spreadsheet for setup and usage guidance.
 
-## 🚀 Getting Started
+## 💾 Installation
 
-### Setup Instructions
+### Use the Template
 
-1.  **Make a Copy of the Google Sheet:**
-    *   Open this [GOOGLE SHEET TEMPLATE (VIEW ONLY)](https://docs.google.com/spreadsheets/d/1mRXJ_Ei8BUdyw2S9E31uS_CtCJ58d1yxh3RnYdp6hQY/edit?usp=sharing).
-    *   Go to **File > Make a copy**. Name your copy and save it to your Google Drive.
-2.  **Review Configuration Sheets:**
+1. [Open the template spreadsheet](https://docs.google.com/spreadsheets/d/1mRXJ_Ei8BUdyw2S9E31uS_CtCJ58d1yxh3RnYdp6hQY/edit?usp=sharing)
+2. Go to **File > Make a copy**. Name your copy and save it to your Google Drive.
+3. Continue to the Setup section below
+
+## 🔧 Setup
+
+1.  **Review Configuration Sheets:**
     *   Open the "Instructions" tab in your copied Google Sheet for a detailed guide on setting up:
         *   **Your Question Bank Sheets** (e.g., `TF`, `MC`, `ES`)
         *   `SelectQuestions_Config`
         *   `CanvasQuiz_Config`
-3.  **Initial Run & Authorization:**
+2.  **Initial Run & Authorization:**
     *   The first time you run any function from the "Extra Menu" (e.g., "Select Questions"), Google will ask for authorization.
     *   Review the permissions carefully and grant them.
-4.  **Canvas API Token:**
+3.  **Canvas API Token:**
     *   The first time you run "Create Quiz on Canvas", if a `CANVAS_API_TOKEN` is not found, you will be prompted to enter it.
     *   This token will be stored in Script Properties for future use.
   

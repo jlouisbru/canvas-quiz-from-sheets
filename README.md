@@ -31,20 +31,20 @@ This Google Apps Script project streamlines the process of selecting questions f
 
 ### Setup Instructions
 
-1.  **📋 Make a Copy of the Google Sheet:**
+1.  **Make a Copy of the Google Sheet:**
     *   Open this [LINK TO YOUR SHARED GOOGLE SHEET TEMPLATE (VIEW ONLY)]().
     *   Go to **File > Make a copy**. Name your copy and save it to your Google Drive.
-2.  **💻 Open the Apps Script Editor:**
+2.  **Open the Apps Script Editor:**
     *   In your copied Google Sheet, go to **Extensions > Apps Script**. This will open the script editor.
-3.  **⚙️ Review Configuration Sheets:**
+3.  **⚙Review Configuration Sheets:**
     *   Open the "Instructions" tab in your copied Google Sheet for a detailed guide on setting up:
         *   **Your Question Bank Sheets** (e.g., `TF`, `MC`, `ES`)
         *   `SelectQuestions_Config`
         *   `CanvasQuiz_Config`
-4.  **🔑 Initial Run & Authorization:**
+4.  **Initial Run & Authorization:**
     *   The first time you run any function from the "Extra Menu" (e.g., "Select Questions"), Google will ask for authorization.
     *   Review the permissions carefully and grant them.
-5.  **🔗 Canvas API Token:**
+5.  **Canvas API Token:**
     *   The first time you run "Create Quiz on Canvas", if a `CANVAS_API_TOKEN` is not found, you will be prompted to enter it.
     *   This token will be stored in Script Properties for future use.
 

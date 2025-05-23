@@ -2,7 +2,7 @@
 
 This Google Apps Script project streamlines the process of selecting questions from various banks within a Google Sheet, and then uploading those selected questions to create quizzes directly in Canvas LMS.
 
-## Features
+## ✨ Features
 
 *   **Centralized Question Banks:** Manage True/False, Multiple Choice, and Essay questions in dedicated Google Sheet tabs.
 *   **Flexible Question Selection:** Configure rules in `SelectQuestions_Config` to pick questions based on:
@@ -22,7 +22,7 @@ This Google Apps Script project streamlines the process of selecting questions f
     *   Progress indicators and completion summaries.
 *   **Instruction Sheet:** Includes a detailed "Instructions" tab within the spreadsheet for setup and usage guidance.
 
-## Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
 
@@ -31,29 +31,24 @@ This Google Apps Script project streamlines the process of selecting questions f
 
 ### Setup Instructions
 
-1.  **Make a Copy of the Google Sheet:**
-    *   Open this https://docs.google.com/spreadsheets/d/1mRXJ_Ei8BUdyw2S9E31uS_CtCJ58d1yxh3RnYdp6hQY/edit?usp=sharing
+1.  **📋 Make a Copy of the Google Sheet:**
+    *   Open this [LINK TO YOUR SHARED GOOGLE SHEET TEMPLATE (VIEW ONLY)]().
     *   Go to **File > Make a copy**. Name your copy and save it to your Google Drive.
-2.  **Open the Apps Script Editor:**
+2.  **💻 Open the Apps Script Editor:**
     *   In your copied Google Sheet, go to **Extensions > Apps Script**. This will open the script editor.
-3.  **Review Configuration Sheets:**
+3.  **⚙️ Review Configuration Sheets:**
     *   Open the "Instructions" tab in your copied Google Sheet for a detailed guide on setting up:
         *   **Your Question Bank Sheets** (e.g., `TF`, `MC`, `ES`)
         *   `SelectQuestions_Config`
         *   `CanvasQuiz_Config`
-4.  **Initial Run & Authorization:**
+4.  **🔑 Initial Run & Authorization:**
     *   The first time you run any function from the "Extra Menu" (e.g., "Select Questions"), Google will ask for authorization.
-    *   Review the permissions carefully and grant them if you trust the script (which you should, as it's your copy!).
-    *   The script will require permission to:
-        *   View and manage your spreadsheets in Google Drive (to read configs and write selected questions).
-        *   Connect to an external service (to interact with the Canvas API).
-        *   Display and run third-party web content in prompts and sidebars (for UI elements like `toast`).
-5.  **Canvas API Token:**
-    *   The first time you run "Create Quiz on Canvas", if a `CANVAS_API_TOKEN` is not found in `CanvasQuiz_Config` or Script Properties, you will be prompted to enter it.
-    *   This token will be stored in Script Properties for future use (scoped to your user and this script project).
-    *   To generate a Canvas API Token: In Canvas, go to Account > Settings > Approved Integrations > "+ New Access Token".
+    *   Review the permissions carefully and grant them.
+5.  **🔗 Canvas API Token:**
+    *   The first time you run "Create Quiz on Canvas", if a `CANVAS_API_TOKEN` is not found, you will be prompted to enter it.
+    *   This token will be stored in Script Properties for future use.
 
-## Usage
+## 🛠️ Usage
 
 Once set up, use the "Extra Menu" in your Google Sheet:
 
@@ -67,7 +62,7 @@ Once set up, use the "Extra Menu" in your Google Sheet:
     *   Run **Extra Menu > Create Quiz on Canvas**.
     *   A summary will appear. The quiz will be created as **UNPUBLISHED** in your Canvas course.
 
-## Code Structure
+## 📂 Code Structure
 
 The Apps Script project is organized into the following main files/modules:
 
@@ -76,7 +71,7 @@ The Apps Script project is organized into the following main files/modules:
     *   `CanvasQuizCreator`: Handles the logic for creating quizzes on Canvas.
 *   **`UiUtils.gs` (Optional):** Contains helper functions for displaying toast messages and dialogs (if you implemented this).
 
-## Configuration Sheets Detailed
+## 📊 Configuration Sheets Detailed
 
 ### `SelectQuestions_Config`
 
@@ -120,20 +115,7 @@ The Apps Script project is organized into the following main files/modules:
 | ...              | ... (Option C-F as needed)                                                  |
 | *(Other cols)*   | For your reference (e.g., Topic, Tags).                                     |
 
-## Contributing
-
-Contributions are welcome! If you'd like to contribute:
-
-1.  Fork the repository.
-2.  Create a new branch (`git checkout -b feature/your-feature-name`).
-3.  Make your changes.
-4.  Commit your changes (`git commit -am 'Add some feature'`).
-5.  Push to the branch (`git push origin feature/your-feature-name`).
-6.  Create a new Pull Request.
-
-Please make sure to update tests as appropriate and follow the existing code style.
-
-## License
+## 📜 License
 
 This project is licensed under the [MIT License](LICENSE) - see the `LICENSE` file for details.
 

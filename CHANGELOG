@@ -1,67 +1,38 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to **Canvas Quiz Creator for Google Sheets** will be documented in this file. 
+*(Adjust "Canvas Quiz Creator for Google Sheets" if you have a different preferred name for this specific tool)*
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (though for an Apps Script project, versioning might be more date-based or feature-based initially).
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [1.0.0] - YYYY-MM-DD 
-
 *(Replace YYYY-MM-DD with today's date for the initial release)*
 
 ### Added
 
-*   **Initial Release of Google Sheets Quiz Management & Canvas Uploader!**
-*   **Question Selection Module (`QuestionShuffler`):**
-    *   Configuration via `SelectQuestions_Config` sheet to specify source sheets, number of questions, lecture ranges, and questions per lecture.
-    *   Ability to mark selected questions with "Do Not Pick Again" in source sheets based on `ID`.
-    *   Outputs selected questions to a `Selected Questions` sheet.
-    *   Supports flexible header row and data start row in `SelectQuestions_Config`.
-*   **Canvas Quiz Creator Module (`CanvasQuizCreator`):**
-    *   Configuration via `CanvasQuiz_Config` sheet for Canvas API details, course ID, quiz title.
-    *   Supports assigning different point values per question type (TF, MC, ES, Default) based on `ID` prefixes.
-    *   Creates quizzes in Canvas using questions from the `Selected Questions` sheet (or other specified sheet).
-    *   Handles True/False (`true_false_question`), Multiple Choice (`multiple_choice_question`), Multiple Answers (`multiple_answers_question`), and Essay (`essay_question`) question types for Canvas.
-    *   Correctly sets answers for True/False questions based on sheet data.
-    *   Calculates and updates total quiz points in Canvas based on successfully added questions.
-    *   Creates quizzes as **UNPUBLISHED**.
-*   **User Interface:**
-    *   Custom "Extra Menu" in Google Sheets for easy access to "Select Questions" and "Create Quiz on Canvas" functionalities.
-    *   (If implemented) Progress toasts and summary dialogs for user feedback.
-    *   Detailed "Instructions" sheet template provided for setup and usage.
-*   **Configuration:**
-    *   Dedicated configuration sheets: `SelectQuestions_Config`, `CanvasQuiz_Config`.
-    *   Constants defined for sheet names and column headers for maintainability.
-*   **Error Handling:**
-    *   Checks for missing configuration sheets and required columns.
-    *   Validation of key configuration parameters.
-    *   Logging of warnings and errors.
-*   **Documentation:**
-    *   Initial `README.md` for project overview, setup, and usage.
-    *   `LICENSE.md` (MIT License suggested).
-    *   `.gitignore` for local development with tools like `clasp`.
-    *   This `CHANGELOG.md`.
-*   **Code Structure:**
-    *   Modular design with `QuestionShuffler` and `CanvasQuizCreator` objects.
-    *   (If implemented) `UiUtils.gs` for UI helper functions.
+-   **Initial Release of Canvas Quiz Creator for Google Sheets!**
+-   **Question Selection System:**
+    -   Select questions from multiple user-defined question bank sheets.
+    -   Configuration via `SelectQuestions_Config` sheet (specify source sheets, count, lecture range, per-lecture limits).
+    -   "Do Not Pick Again" feature to mark used questions in source banks.
+    -   Selected questions compiled into a dedicated `Selected Questions` sheet.
+-   **Canvas Quiz Uploader:**
+    -   Create quizzes directly in Canvas LMS from the `Selected Questions` sheet.
+    *   Configuration via `CanvasQuiz_Config` sheet (Canvas URL, Course ID, Quiz Title, API Token handling).
+    -   Support for question-type specific point values (TF, MC, ES, Default) based on `ID` prefixes.
+    -   Handles True/False, Multiple Choice, Multiple Answers, and Essay question types.
+    -   Quizzes created as **UNPUBLISHED** in Canvas for review.
+-   **Spreadsheet Interface & Setup:**
+    -   Custom "Extra Menu" for easy operation.
+    -   Secure API key handling with Script Properties (prompt on first use).
+    -   Progress tracking with toast notifications and summary dialogs.
+    -   Comprehensive "Instructions" sheet template provided for setup and usage guidance.
+-   **Documentation:**
+    -   `README.md` for project overview, setup, and usage.
+    -   `LICENSE.md` (MIT).
+    -   This `CHANGELOG.md`.
 
-### Changed
-
-*   N/A (Initial Release)
-
-### Deprecated
-
-*   N/A (Initial Release)
-
-### Removed
-
-*   *(If you previously had a Doc Exam Creator and removed it, mention it here. Otherwise, N/A)*
-    *   Example: Removed "Create Doc Exam" functionality to focus on Canvas quiz creation.
-
-### Fixed
-
-*   N/A (Initial Release - any fixes made during development are part of "Added")
-
-### Security
-
-*   Canvas API Token is prompted for on first use if not provided and stored in user-scoped Script Properties.
+---
+*(Link to the GitHub release tag once you create it)*
+*[1.0.0]: https://github.com/YOUR_USERNAME/YOUR_REPOSITORY_NAME/releases/tag/v1.0.0*

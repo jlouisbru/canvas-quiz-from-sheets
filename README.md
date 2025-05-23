@@ -36,7 +36,7 @@ This Google Apps Script project streamlines the process of selecting questions f
     *   Go to **File > Make a copy**. Name your copy and save it to your Google Drive.
 2.  **Open the Apps Script Editor:**
     *   In your copied Google Sheet, go to **Extensions > Apps Script**. This will open the script editor.
-3.  **⚙Review Configuration Sheets:**
+3.  **Review Configuration Sheets:**
     *   Open the "Instructions" tab in your copied Google Sheet for a detailed guide on setting up:
         *   **Your Question Bank Sheets** (e.g., `TF`, `MC`, `ES`)
         *   `SelectQuestions_Config`

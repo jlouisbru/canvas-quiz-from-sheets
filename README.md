@@ -78,8 +78,6 @@ The Apps Script project is organized into the following main files/modules:
 
 ## Configuration Sheets Detailed
 
-*(You can either link to the "Instructions" tab in your example sheet or duplicate parts of it here for quick reference.)*
-
 ### `SelectQuestions_Config`
 
 | Header                       | Description                                                                 |

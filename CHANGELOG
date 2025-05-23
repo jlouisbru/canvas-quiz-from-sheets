@@ -65,14 +65,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 *   Canvas API Token is prompted for on first use if not provided and stored in user-scoped Script Properties.
-
----
-
-## [Unreleased]
-
-### Added
-### Changed
-### Deprecated
-### Removed
-### Fixed
-### Security

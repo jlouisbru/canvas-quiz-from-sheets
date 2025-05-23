@@ -36,27 +36,19 @@ This Google Apps Script project streamlines the process of selecting questions f
     *   Go to **File > Make a copy**. Name your copy and save it to your Google Drive.
 2.  **Open the Apps Script Editor:**
     *   In your copied Google Sheet, go to **Extensions > Apps Script**. This will open the script editor.
-3.  **(Optional but Recommended for `clasp` users) Link with `clasp`:**
-    *   If you plan to manage the code locally using `clasp`:
-        *   Install `clasp`: `npm install -g @google/clasp`
-        *   Log in: `clasp login`
-        *   Clone this GitHub repository (or your fork) to your local machine.
-        *   Navigate to the cloned directory in your terminal.
-        *   Link `clasp` to your copied Apps Script project: `clasp clone <SCRIPT_ID>` (You can get the `<SCRIPT_ID>` from **Project Settings (gear icon) > IDs > Script ID** in the Apps Script editor of *your copied sheet*).
-        *   Alternatively, if you already have the code locally from GitHub, you can create a new Apps Script project bound to your sheet and then `clasp push` the files.
-4.  **Review Configuration Sheets:**
+3.  **Review Configuration Sheets:**
     *   Open the "Instructions" tab in your copied Google Sheet for a detailed guide on setting up:
         *   **Your Question Bank Sheets** (e.g., `TF`, `MC`, `ES`)
         *   `SelectQuestions_Config`
         *   `CanvasQuiz_Config`
-5.  **Initial Run & Authorization:**
+4.  **Initial Run & Authorization:**
     *   The first time you run any function from the "Extra Menu" (e.g., "Select Questions"), Google will ask for authorization.
     *   Review the permissions carefully and grant them if you trust the script (which you should, as it's your copy!).
     *   The script will require permission to:
         *   View and manage your spreadsheets in Google Drive (to read configs and write selected questions).
         *   Connect to an external service (to interact with the Canvas API).
         *   Display and run third-party web content in prompts and sidebars (for UI elements like `toast`).
-6.  **Canvas API Token:**
+5.  **Canvas API Token:**
     *   The first time you run "Create Quiz on Canvas", if a `CANVAS_API_TOKEN` is not found in `CanvasQuiz_Config` or Script Properties, you will be prompted to enter it.
     *   This token will be stored in Script Properties for future use (scoped to your user and this script project).
     *   To generate a Canvas API Token: In Canvas, go to Account > Settings > Approved Integrations > "+ New Access Token".
@@ -83,8 +75,6 @@ The Apps Script project is organized into the following main files/modules:
     *   `QuestionShuffler`: Handles the logic for selecting questions.
     *   `CanvasQuizCreator`: Handles the logic for creating quizzes on Canvas.
 *   **`UiUtils.gs` (Optional):** Contains helper functions for displaying toast messages and dialogs (if you implemented this).
-
-*(Adjust file names if yours are different)*
 
 ## Configuration Sheets Detailed
 

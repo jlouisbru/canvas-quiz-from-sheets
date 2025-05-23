@@ -66,10 +66,10 @@ Once set up, use the "Extra Menu" in your Google Sheet:
 
 The Apps Script project is organized into the following main files/modules:
 
-*   **`Code.gs` (or your main file name):** Contains the main `onOpen` function, global constants, and the `QuestionShuffler`, and `CanvasQuizCreator` modules/objects.
+*   **`CreateCanvasQuiz.gs`:** Contains the main `onOpen` function, global constants, and the `QuestionShuffler`, and `CanvasQuizCreator` modules/objects.
     *   `QuestionShuffler`: Handles the logic for selecting questions.
     *   `CanvasQuizCreator`: Handles the logic for creating quizzes on Canvas.
-*   **`UiUtils.gs` (Optional):** Contains helper functions for displaying toast messages and dialogs (if you implemented this).
+*   **`UiUtils.gs`:** Contains helper functions for displaying toast messages and dialogs (if you implemented this).
 
 ## 📊 Configuration Sheets Detailed
 

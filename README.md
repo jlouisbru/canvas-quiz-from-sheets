@@ -1,0 +1,157 @@
+# Google Sheets Quiz Management & Canvas Uploader
+
+![Spreadsheet Example](link_to_an_image_of_your_spreadsheet_interface.png) <!-- Optional: Add a nice screenshot -->
+
+This Google Apps Script project streamlines the process of selecting questions from various banks within a Google Sheet, and then uploading those selected questions to create quizzes directly in Canvas LMS.
+
+## Features
+
+*   **Centralized Question Banks:** Manage True/False, Multiple Choice, and Essay questions in dedicated Google Sheet tabs.
+*   **Flexible Question Selection:** Configure rules in `SelectQuestions_Config` to pick questions based on:
+    *   Source sheet
+    *   Total number of questions
+    *   Questions per lecture/topic
+    *   Lecture/topic range
+    *   Option to mark questions as "Do Not Pick Again" in source sheets.
+*   **Automated Canvas Quiz Creation:**
+    *   Generates quizzes in Canvas using questions from the `Selected Questions` sheet.
+    *   Supports different point values per question type (TF, MC, ES, Default).
+    *   Handles True/False, Multiple Choice, Multiple Answers, and Essay question types in Canvas.
+    *   Creates quizzes as **UNPUBLISHED**, allowing for review before student access.
+*   **User-Friendly Interface:**
+    *   Custom menu within Google Sheets for easy operation.
+    *   Configuration driven through dedicated sheets (`SelectQuestions_Config`, `CanvasQuiz_Config`).
+    *   Progress indicators and completion summaries.
+*   **Instruction Sheet:** Includes a detailed "Instructions" tab within the spreadsheet for setup and usage guidance.
+
+## Getting Started
+
+### Prerequisites
+
+1.  A Google Account (to use Google Sheets and Apps Script).
+2.  A Canvas LMS account with appropriate permissions to create quizzes and generate API Access Tokens.
+
+### Setup Instructions
+
+1.  **Make a Copy of the Google Sheet:**
+    *   Open this [LINK TO YOUR SHARED GOOGLE SHEET TEMPLATE (VIEW ONLY)]().
+    *   Go to **File > Make a copy**. Name your copy and save it to your Google Drive.
+2.  **Open the Apps Script Editor:**
+    *   In your copied Google Sheet, go to **Extensions > Apps Script**. This will open the script editor.
+3.  **(Optional but Recommended for `clasp` users) Link with `clasp`:**
+    *   If you plan to manage the code locally using `clasp`:
+        *   Install `clasp`: `npm install -g @google/clasp`
+        *   Log in: `clasp login`
+        *   Clone this GitHub repository (or your fork) to your local machine.
+        *   Navigate to the cloned directory in your terminal.
+        *   Link `clasp` to your copied Apps Script project: `clasp clone <SCRIPT_ID>` (You can get the `<SCRIPT_ID>` from **Project Settings (gear icon) > IDs > Script ID** in the Apps Script editor of *your copied sheet*).
+        *   Alternatively, if you already have the code locally from GitHub, you can create a new Apps Script project bound to your sheet and then `clasp push` the files.
+4.  **Review Configuration Sheets:**
+    *   Open the "Instructions" tab in your copied Google Sheet for a detailed guide on setting up:
+        *   **Your Question Bank Sheets** (e.g., `TF`, `MC`, `ES`)
+        *   `SelectQuestions_Config`
+        *   `CanvasQuiz_Config`
+5.  **Initial Run & Authorization:**
+    *   The first time you run any function from the "Extra Menu" (e.g., "Select Questions"), Google will ask for authorization.
+    *   Review the permissions carefully and grant them if you trust the script (which you should, as it's your copy!).
+    *   The script will require permission to:
+        *   View and manage your spreadsheets in Google Drive (to read configs and write selected questions).
+        *   Connect to an external service (to interact with the Canvas API).
+        *   Display and run third-party web content in prompts and sidebars (for UI elements like `toast`).
+6.  **Canvas API Token:**
+    *   The first time you run "Create Quiz on Canvas", if a `CANVAS_API_TOKEN` is not found in `CanvasQuiz_Config` or Script Properties, you will be prompted to enter it.
+    *   This token will be stored in Script Properties for future use (scoped to your user and this script project).
+    *   To generate a Canvas API Token: In Canvas, go to Account > Settings > Approved Integrations > "+ New Access Token".
+
+## Usage
+
+Once set up, use the "Extra Menu" in your Google Sheet:
+
+1.  **Select Questions:**
+    *   Configure the `SelectQuestions_Config` sheet.
+    *   Run **Extra Menu > Select Questions**.
+    *   The `Selected Questions` sheet will be populated.
+2.  **Create Quiz on Canvas:**
+    *   Ensure the `Selected Questions` sheet (or the sheet specified in `CanvasQuiz_Config`) has the questions you want.
+    *   Configure the `CanvasQuiz_Config` sheet with your Canvas URL, Course ID, quiz title, and points.
+    *   Run **Extra Menu > Create Quiz on Canvas**.
+    *   A summary will appear. The quiz will be created as **UNPUBLISHED** in your Canvas course.
+
+## Code Structure
+
+The Apps Script project is organized into the following main files/modules:
+
+*   **`Code.gs` (or your main file name):** Contains the main `onOpen` function, global constants, and the `QuestionShuffler`, and `CanvasQuizCreator` modules/objects.
+    *   `QuestionShuffler`: Handles the logic for selecting questions.
+    *   `CanvasQuizCreator`: Handles the logic for creating quizzes on Canvas.
+*   **`UiUtils.gs` (Optional):** Contains helper functions for displaying toast messages and dialogs (if you implemented this).
+
+*(Adjust file names if yours are different)*
+
+## Configuration Sheets Detailed
+
+*(You can either link to the "Instructions" tab in your example sheet or duplicate parts of it here for quick reference.)*
+
+### `SelectQuestions_Config`
+
+| Header                       | Description                                                                 |
+| :--------------------------- | :-------------------------------------------------------------------------- |
+| Sheet Name                   | Exact name of your question bank sheet tab.                                 |
+| Include                      | Checkbox (TRUE/FALSE) to include this sheet.                                |
+| Total Questions from Sheet   | Max questions to select from this sheet.                                    |
+| Questions per Lecture        | Max questions per lecture from this sheet (0 = no per-lecture limit).       |
+| Lecture Range Min            | Min lecture number/ID to consider.                                          |
+| Lecture Range Max            | Max lecture number/ID to consider.                                          |
+| Do Not Pick Again            | Checkbox (TRUE/FALSE) to mark selected questions as "do not pick" in source. |
+
+### `CanvasQuiz_Config`
+
+| Parameter                 | Description                                                                    |
+| :------------------------ | :----------------------------------------------------------------------------- |
+| `CANVAS_API_URL`          | Your Canvas instance URL (NO `/api/v1` at the end).                            |
+| `CANVAS_API_TOKEN`        | (Optional) Your Canvas API Access Token.                                       |
+| `COURSE_ID`               | Numerical ID of your Canvas course.                                            |
+| `SHEET_NAME`              | Name of the sheet holding questions for Canvas (e.g., "Selected Questions").   |
+| `QUIZ_TITLE`              | Title of the quiz in Canvas.                                                   |
+| `POINTS_PER_QUESTION_TF`  | Points for True/False questions.                                               |
+| `POINTS_PER_QUESTION_MC`  | Points for Multiple Choice/Answer questions.                                   |
+| `POINTS_PER_QUESTION_ES`  | Points for Essay questions.                                                    |
+| `POINTS_PER_QUESTION_DEFAULT` | Default points if ID prefix doesn't match TF, MC, or ES.                   |
+
+### Question Bank Sheet Structure (e.g., "TF", "MC")
+
+**Row 1 must be headers.**
+
+| Header           | Description                                                                 |
+| :--------------- | :-------------------------------------------------------------------------- |
+| `ID`             | Unique ID (e.g., `TF001`, `MC_Topic_01`). Prefix determines Canvas type.    |
+| `Do not pick`    | Checkbox (TRUE/FALSE).                                                      |
+| `Lecture`        | Lecture number/ID.                                                          |
+| `Question Text`  | Full question text.                                                         |
+| `Correct Answer` | For TF: `TRUE`/`FALSE`. For MC: `A` or `A,C,D`. For ES: Optional model answer. |
+| `Option A`       | Text for option A.                                                          |
+| `Option B`       | Text for option B.                                                          |
+| ...              | ... (Option C-F as needed)                                                  |
+| *(Other cols)*   | For your reference (e.g., Topic, Tags).                                     |
+
+## Contributing
+
+Contributions are welcome! If you'd like to contribute:
+
+1.  Fork the repository.
+2.  Create a new branch (`git checkout -b feature/your-feature-name`).
+3.  Make your changes.
+4.  Commit your changes (`git commit -am 'Add some feature'`).
+5.  Push to the branch (`git push origin feature/your-feature-name`).
+6.  Create a new Pull Request.
+
+Please make sure to update tests as appropriate and follow the existing code style.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE.md) - see the `LICENSE.md` file for details.
+*(Choose a license you prefer - MIT is common and permissive)*
+
+## Acknowledgements
+
+*   (Optional: Anyone you want to thank or any libraries/inspirations)

@@ -7,6 +7,12 @@ This Google Apps Script project streamlines the process of selecting questions f
 [![Platform](https://img.shields.io/badge/platform-Google%20Sheets-green)](https://docs.google.com/spreadsheets/d/18ZggFU-2xBdbl3pVPY3dXR-U5DYdroxvYaZJXGcvIPA/edit?usp=sharing)
 [![Support on Ko-fi](https://img.shields.io/badge/Support-Ko--fi-ff5f5f)](https://ko-fi.com/louisfr)
 
+## 🚀 Quick Start
+
+[![Use Google Sheet Template](https://img.shields.io/badge/Use_Template-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://docs.google.com/spreadsheets/d/1mRXJ_Ei8BUdyw2S9E31uS_CtCJ58d1yxh3RnYdp6hQY/edit?usp=sharing)
+
+Click the button above to create your own copy of the Canvas Tools template
+
 ## ✨ Features
 
 *   **Centralized Question Banks:** Manage True/False, Multiple Choice, and Essay questions in dedicated Google Sheet tabs.

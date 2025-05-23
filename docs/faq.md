@@ -11,7 +11,7 @@ Yes, Canvas Quiz Creator for Google Sheets is completely free and open-source un
 ## 🚀 Setup Questions
 
 ### Do I need to know programming to use this tool?
-No! It's designed for educators with no programming experience. Simply make a copy of our [Google Sheet Template](<LINK_TO_YOUR_SHARED_GOOGLE_SHEET_TEMPLATE_VIEW_ONLY>) *(<-- Replace this link!)* and follow the "Instructions" tab within it to get started.
+No! It's designed for educators with no programming experience. Simply make a copy of our [Google Sheet Template](https://docs.google.com/spreadsheets/d/1mRXJ_Ei8BUdyw2S9E31uS_CtCJ58d1yxh3RnYdp6hQY/edit?usp=sharing) and follow the "Instructions" tab within it to get started.
 
 ### How do I find my Canvas Course ID?
 Your Course ID is a number that appears in the URL when you are viewing your course page in Canvas. For example, in `https://yourschool.instructure.com/courses/12345`, the Course ID is `12345`.
@@ -112,9 +112,3 @@ While this tool leverages standard functionalities of Google Workspace and the C
 *   Use of third-party or custom scripts that interact with the LMS.
 *   Generating Canvas API tokens and their approved uses.
 Some institutions may have review processes for tools that access LMS data, even if the access is initiated by an authorized faculty member. When in doubt, check with your IT department or instructional technology support team.
-
----
-
-**Remember to replace `<LINK_TO_YOUR_SHARED_GOOGLE_SHEET_TEMPLATE_VIEW_ONLY>` with the actual link to your Google Sheet template!**
-
-This version should align well with the style you showed and provide clear, concise answers for users of your "Canvas Quiz Creator for Google Sheets."

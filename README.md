@@ -1,7 +1,5 @@
 # Create Canvas Quiz From Google Sheets
 
-![Spreadsheet Example](link_to_an_image_of_your_spreadsheet_interface.png) <!-- Optional: Add a nice screenshot -->
-
 This Google Apps Script project streamlines the process of selecting questions from various banks within a Google Sheet, and then uploading those selected questions to create quizzes directly in Canvas LMS.
 
 ## Features

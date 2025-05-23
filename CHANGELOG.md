@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
--   **Initial Release of Canvas Quiz Creator for Google Sheets!**
+-   **Initial Release of Create Canvas Quiz from Google Sheets!**
 -   **Question Selection System:**
     -   Select questions from multiple user-defined question bank sheets.
     -   Configuration via `SelectQuestions_Config` sheet (specify source sheets, count, lecture range, per-lecture limits).

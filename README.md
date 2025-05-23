@@ -32,7 +32,7 @@ This Google Apps Script project streamlines the process of selecting questions f
 ### Setup Instructions
 
 1.  **Make a Copy of the Google Sheet:**
-    *   Open this [LINK TO YOUR SHARED GOOGLE SHEET TEMPLATE (VIEW ONLY)]().
+    *   Open this https://docs.google.com/spreadsheets/d/1mRXJ_Ei8BUdyw2S9E31uS_CtCJ58d1yxh3RnYdp6hQY/edit?usp=sharing
     *   Go to **File > Make a copy**. Name your copy and save it to your Google Drive.
 2.  **Open the Apps Script Editor:**
     *   In your copied Google Sheet, go to **Extensions > Apps Script**. This will open the script editor.

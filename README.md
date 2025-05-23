@@ -29,29 +29,33 @@ This Google Apps Script project streamlines the process of selecting questions f
 
 ## 🚀 Getting Started
 
-### Prerequisites
-
-1.  A Google Account (to use Google Sheets and Apps Script).
-2.  A Canvas LMS account with appropriate permissions to create quizzes and generate API Access Tokens.
-
 ### Setup Instructions
 
 1.  **Make a Copy of the Google Sheet:**
     *   Open this [GOOGLE SHEET TEMPLATE (VIEW ONLY)](https://docs.google.com/spreadsheets/d/1mRXJ_Ei8BUdyw2S9E31uS_CtCJ58d1yxh3RnYdp6hQY/edit?usp=sharing).
     *   Go to **File > Make a copy**. Name your copy and save it to your Google Drive.
-2.  **Open the Apps Script Editor:**
-    *   In your copied Google Sheet, go to **Extensions > Apps Script**. This will open the script editor.
-3.  **Review Configuration Sheets:**
+2.  **Review Configuration Sheets:**
     *   Open the "Instructions" tab in your copied Google Sheet for a detailed guide on setting up:
         *   **Your Question Bank Sheets** (e.g., `TF`, `MC`, `ES`)
         *   `SelectQuestions_Config`
         *   `CanvasQuiz_Config`
-4.  **Initial Run & Authorization:**
+3.  **Initial Run & Authorization:**
     *   The first time you run any function from the "Extra Menu" (e.g., "Select Questions"), Google will ask for authorization.
     *   Review the permissions carefully and grant them.
-5.  **Canvas API Token:**
+4.  **Canvas API Token:**
     *   The first time you run "Create Quiz on Canvas", if a `CANVAS_API_TOKEN` is not found, you will be prompted to enter it.
     *   This token will be stored in Script Properties for future use.
+  
+## 🔑 Generating a Canvas API Key
+
+1. Log into Canvas
+2. Go to Account > Settings
+3. Scroll to "Approved Integrations"
+4. Click "New Access Token"
+5. Enter a purpose (e.g., "Google Sheets Integration")
+6. Set an expiration date if desired
+7. Click "Generate Token"
+8. **IMPORTANT:** Copy the token immediately - you cannot view it again!
 
 ## 🛠️ Usage
 
@@ -66,15 +70,6 @@ Once set up, use the "Extra Menu" in your Google Sheet:
     *   Configure the `CanvasQuiz_Config` sheet with your Canvas URL, Course ID, quiz title, and points.
     *   Run **Extra Menu > Create Quiz on Canvas**.
     *   A summary will appear. The quiz will be created as **UNPUBLISHED** in your Canvas course.
-
-## 📂 Code Structure
-
-The Apps Script project is organized into the following main files/modules:
-
-*   **`CreateCanvasQuiz.gs`:** Contains the main `onOpen` function, global constants, and the `QuestionShuffler`, and `CanvasQuizCreator` modules/objects.
-    *   `QuestionShuffler`: Handles the logic for selecting questions.
-    *   `CanvasQuizCreator`: Handles the logic for creating quizzes on Canvas.
-*   **`UiUtils.gs`:** Contains helper functions for displaying toast messages and dialogs (if you implemented this).
 
 ## 📊 Configuration Sheets Detailed
 

@@ -31,7 +31,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     -   `README.md` for project overview, setup, and usage.
     -   `LICENSE.md` (MIT).
     -   This `CHANGELOG.md`.
-
----
-*(Link to the GitHub release tag once you create it)*
-*[1.0.0]: https://github.com/YOUR_USERNAME/YOUR_REPOSITORY_NAME/releases/tag/v1.0.0*

@@ -124,9 +124,14 @@ Once set up, use the "Extra Menu" in your Google Sheet:
 | ...              | ... (Option C-F as needed)                                                  |
 | *(Other cols)*   | For your reference (e.g., Topic, Tags).                                     |
 
-## 📜 License
+## 📄 License
 
-This project is licensed under the [MIT License](LICENSE) - see the `LICENSE` file for details.
+This project uses dual licensing:
+
+- **Code**: [MIT License](LICENSE)
+- **Documentation & Template**: [CC BY-SA 4.0](LICENSE-DOCS.md)
+
+© 2025 Jean-Louis Bru, Ph.D.
 
 ## 👤 Author
 

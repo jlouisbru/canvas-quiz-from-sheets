@@ -35,7 +35,7 @@ const PROP_CANVAS_API_TOKEN = 'CANVAS_API_TOKEN';
 
 // ========= SPREADSHEET UI MENU =======================================
 function onOpen() {
-  SpreadsheetApp.getUi().createMenu('Extra Menu')
+  SpreadsheetApp.getUi().createMenu('Quiz Tools')
     .addItem('Select Questions', 'runShuffleQuestions')
     .addSeparator()
     .addItem('Create Quiz on Canvas', 'runQuizCreation')
@@ -110,36 +110,26 @@ var QuestionShuffler = {
     }
 
     let allSelectedData = [];
-    let finalTargetHeaders = null; 
-
+    let finalTargetHeaders = null;
     const availableSheetNames = Object.keys(sourceSheetsData);
-    if (availableSheetNames.length > 0) {
-        for (const sheetName of availableSheetNames) {
-            const sheet = sourceSheetsData[sheetName];
-            const range = sheet.getDataRange();
-            if (range) {
-                const values = range.getValues();
-                if (values.length > 0 && values[0].length > 0) { 
-                    finalTargetHeaders = values[0].map(h => String(h).trim());
-                    break; 
-                }
-            }
-        }
-    }
-    
-    for (const sheetName of availableSheetNames) { 
+
+    for (const sheetName of availableSheetNames) {
       const sourceSheet = sourceSheetsData[sheetName];
       const sheetConfig = config.sheets[sheetName];
       
       const data = sourceSheet.getDataRange().getValues();
-      if (data.length <= 1) { 
+      if (data.length === 0) {
         Logger.log(`Sheet '${sheetName}' has no data rows.`);
-        continue; 
+        continue;
       }
 
       const currentSourceHeaders = data.shift().map(h => String(h).trim());
       if (finalTargetHeaders === null && currentSourceHeaders.length > 0) {
-          finalTargetHeaders = [...currentSourceHeaders];
+        finalTargetHeaders = [...currentSourceHeaders];
+      }
+      if (data.length === 0) {
+        Logger.log(`Sheet '${sheetName}' has no data rows.`);
+        continue;
       }
 
       const idIndex = currentSourceHeaders.indexOf(COL_ID);
@@ -199,7 +189,7 @@ var QuestionShuffler = {
   updateSourceSheet: function(sheet, selectedRows, dnpIdx, idIdx) {
     const numRows = sheet.getLastRow() - 1;
     if (numRows <= 0) return;
-    const data = sheet.getRange(2, 1, numRows, sheet.getLastColumn()).getValues();
+    const idColData  = sheet.getRange(2, idIdx  + 1, numRows, 1).getValues();
     const dnpColData = sheet.getRange(2, dnpIdx + 1, numRows, 1).getValues();
     const selectedIds = new Set(selectedRows.map(r => (r.length > idIdx && r[idIdx] !== null) ? String(r[idIdx]).trim() : null).filter(id => id));
 
@@ -209,8 +199,8 @@ var QuestionShuffler = {
     }
     let changed = false;
     for (let i = 0; i < numRows; i++) {
-      if (data[i].length > idIdx && data[i][idIdx] !== null) {
-        const currentId = String(data[i][idIdx]).trim();
+      if (idColData[i][0] !== null) {
+        const currentId = String(idColData[i][0]).trim();
         if (currentId && selectedIds.has(currentId) && dnpColData[i][0] !== true) {
           dnpColData[i][0] = true;
           changed = true;
@@ -228,6 +218,7 @@ var QuestionShuffler = {
   },
 
   selectQuestionsPerLecture: function(grouped, perLec, total) {
+    // perLec = 0 means no per-lecture limit: all questions go to rem and are randomly drawn up to total.
     let sel = [], rem = [];
     Object.values(grouped).forEach(qs => {
       this.shuffleArray(qs);
@@ -264,8 +255,7 @@ function runShuffleQuestions() {
  * Wraps UrlFetchApp.fetch with automatic retry on rate-limit (429) or
  * temporary server errors (503). Waits 1 s, 2 s, 4 s between attempts.
  */
-function canvasFetchWithRetry(url, opts, maxRetries) {
-  maxRetries = maxRetries || 3;
+function canvasFetchWithRetry(url, opts, maxRetries = 3) {
   let resp;
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     resp = UrlFetchApp.fetch(url, opts);
@@ -305,26 +295,28 @@ function buildMCAnswers(row, cols, correctAnswers, questionType) {
 
 /**
  * Determines the Canvas question type, point value, and answers for one row.
- * Returns { canvasQuestionType, questionPoints, answers } or null if the question
- * should be skipped (error already pushed to questionsWithErrors).
+ * Returns { canvasQuestionType, questionPoints, answers } on success.
+ * Returns { skip: true, error: '...' } if the question must be skipped.
+ * Returns { ..., errorNote: '...' } for non-fatal issues (e.g. invalid TF answer).
+ * The caller is responsible for pushing error/errorNote into questionsWithErrors.
  */
-function resolveQuestion(row, cols, questionId, correctAnswerFromSheet, config, rowNum, questionsWithErrors, qText) {
+function resolveQuestion({ row, cols, questionId, correctAnswerFromSheet, config, rowNum, qText }) {
   if (questionId.startsWith("ES")) {
     return { canvasQuestionType: 'essay_question', questionPoints: config.POINTS_PER_QUESTION_ES, answers: [] };
   }
 
   if (questionId.startsWith("TF")) {
-    let answers;
+    let answers, errorNote = null;
     if (correctAnswerFromSheet === "TRUE") {
       answers = [{ text: "True", weight: 100 }, { text: "False", weight: 0 }];
     } else if (correctAnswerFromSheet === "FALSE") {
       answers = [{ text: "True", weight: 0 }, { text: "False", weight: 100 }];
     } else {
       Logger.log(`ERROR for TF Question ID "${questionId}" (Row ${rowNum + 1}): Correct answer is "${correctAnswerFromSheet}", expected "TRUE" or "FALSE".`);
-      questionsWithErrors.push(`Sheet Row ${rowNum + 1} (TF "${qText.substring(0, 15)}..."): Invalid correct answer: '${correctAnswerFromSheet}'.`);
+      errorNote = `Sheet Row ${rowNum + 1} (TF "${qText.substring(0, 15)}..."): Invalid correct answer: '${correctAnswerFromSheet}'.`;
       answers = [{ text: "True", weight: 0 }, { text: "False", weight: 0 }];
     }
-    return { canvasQuestionType: 'true_false_question', questionPoints: config.POINTS_PER_QUESTION_TF, answers };
+    return { canvasQuestionType: 'true_false_question', questionPoints: config.POINTS_PER_QUESTION_TF, answers, errorNote };
   }
 
   const isMC = questionId.startsWith("MC");
@@ -339,8 +331,7 @@ function resolveQuestion(row, cols, questionId, correctAnswerFromSheet, config, 
   const answers = buildMCAnswers(row, cols, correctAnswers, canvasQuestionType);
   if (answers.length === 0) {
     Logger.log(`Skipping Q (Row ${rowNum + 1}, "${qText.substring(0, 20)}..."): No valid options found.`);
-    questionsWithErrors.push(`Sheet Row ${rowNum + 1} ("${qText.substring(0, 15)}..."): Skipped - No options for ${canvasQuestionType}.`);
-    return null;
+    return { skip: true, error: `Sheet Row ${rowNum + 1} ("${qText.substring(0, 15)}..."): Skipped - No options for ${canvasQuestionType}.` };
   }
   if (isMC && questionPoints > 0 && answers.every(ans => ans.weight === 0) && correctAnswers.length > 0 && correctAnswers[0] !== "") {
     Logger.log(`Warning MC/MA Q (Row ${rowNum + 1}, "${qText.substring(0, 20)}..."): Correct "${correctAnswers.join(',')}" specified but no option matched.`);
@@ -515,12 +506,12 @@ function createQuizInCanvas(config, sheet) {
       ? String(rawCorrectAnswer).toUpperCase()
       : String(rawCorrectAnswer || "").trim().toUpperCase();
 
-    const resolved = resolveQuestion(row, cols, questionId, correctAnswerFromSheet, config, questionSheetRowNum, questionsWithErrors, qText);
-    if (!resolved) continue;
-
+    const resolved = resolveQuestion({ row, cols, questionId, correctAnswerFromSheet, config, rowNum: questionSheetRowNum, qText });
+    if (resolved.skip) { questionsWithErrors.push(resolved.error); continue; }
+    if (resolved.errorNote) { questionsWithErrors.push(resolved.errorNote); }
     const { canvasQuestionType, questionPoints, answers } = resolved;
     const questionAPIPayload = {
-      'question[question_name]': `Question ${successfulAdds + 1}`,
+      'question[question_name]': `Question ${successfulAdds + 1} (${questionId})`,
       'question[question_text]': qText,
       'question[question_type]': canvasQuestionType,
       'question[points_possible]': questionPoints
@@ -547,8 +538,6 @@ function createQuizInCanvas(config, sheet) {
       currentQuizTotalPoints += questionPoints;
     }
   }
-  SpreadsheetApp.flush();
-
   // --- Update quiz total points ---
   if (quiz.points_possible !== currentQuizTotalPoints) {
     Logger.log(`Updating quiz total points from ${quiz.points_possible} to ${currentQuizTotalPoints}.`);
@@ -586,63 +575,72 @@ function createQuizInCanvas(config, sheet) {
   Logger.log(`Canvas quiz creation: ${successfulAdds} of ${questionRows.length} rows processed. ${successfulAdds} questions added to quiz ID ${quizCanvasId}. Total points: ${currentQuizTotalPoints}.`);
 }
 
-function runQuizCreation() {
-  const ui = SpreadsheetApp.getUi(), ss = SpreadsheetApp.getActiveSpreadsheet(); 
-  const valMsgs=[], addMsg = (msg, isErr = false) => { valMsgs.push(msg); if (isErr) valErrs = true; };
-  let valErrs=false, config, qSheet; 
+function validateQuizSetup() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const messages = [];
+  let config, sheet, hasErrors = false;
+  const addMsg = (msg, isErr = false) => { messages.push(msg); if (isErr) hasErrors = true; };
 
   try {
+    config = getCanvasQuizModuleConfig();
+    addMsg('✅ CanvasQuiz_Config processed.');
+
+    sheet = ss.getSheetByName(config.SHEET_NAME);
+    if (!sheet) {
+      addMsg(`❌ Questions sheet "${config.SHEET_NAME}" not found.`, true);
+    } else {
+      addMsg(`✅ Questions sheet "${config.SHEET_NAME}" found.`);
+      const data = sheet.getDataRange().getValues();
+      if (data.length <= 1) {
+        addMsg(`❌ Questions sheet "${config.SHEET_NAME}" is empty or only has headers.`, true);
+      } else {
+        addMsg('✅ Questions sheet has data.');
+        const headers = data[0].map(h => String(h).trim());
+        const missingH = [COL_QUESTION_TEXT, COL_CORRECT_ANSWER, COL_ID].filter(h => !headers.includes(h));
+        if (missingH.length > 0) addMsg(`❌ Questions sheet "${config.SHEET_NAME}" missing: ${missingH.join(', ')}.`, true);
+        else addMsg('✅ Critical columns present in questions sheet.');
+      }
+    }
+
+    if (!hasErrors && config.CANVAS_API_URL && config.CANVAS_API_TOKEN && config.COURSE_ID) {
+      const testResp = UrlFetchApp.fetch(
+        `${config.CANVAS_API_URL}/api/v1/courses/${config.COURSE_ID}`,
+        { method: 'get', headers: { 'Authorization': `Bearer ${config.CANVAS_API_TOKEN}` }, muteHttpExceptions: true }
+      );
+      if (testResp.getResponseCode() === 200) addMsg('✅ Canvas API connection and Course ID seem valid.');
+      else addMsg(`❌ Canvas API/Course ID invalid. Status: ${testResp.getResponseCode()}. Resp: ${testResp.getContentText().substring(0, 70)}...`, true);
+    } else if (!hasErrors) {
+      addMsg('❌ Canvas API details incomplete; connection not tested.', true);
+    }
+  } catch (e) {
+    addMsg(`❌ CRITICAL SETUP ERROR: ${e.message}`, true);
+    Logger.log(`Validation/Config Error in validateQuizSetup: ${e.stack}`);
+  }
+
+  return { valid: !hasErrors, messages, config, sheet };
+}
+
+function runQuizCreation() {
+  const ui = SpreadsheetApp.getUi();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  try {
     showProgressToast('Starting Canvas Quiz setup validation...', 'Canvas Quiz');
-    try {
-      config = getCanvasQuizModuleConfig(); 
-      addMsg('✅ CanvasQuiz_Config processed.'); 
-      
-      qSheet = ss.getSheetByName(config.SHEET_NAME);
-      if (!qSheet) addMsg(`❌ Questions sheet "${config.SHEET_NAME}" not found.`, true);
-      else {
-        addMsg(`✅ Questions sheet "${config.SHEET_NAME}" found.`);
-        const data = qSheet.getDataRange().getValues();
-        if (data.length <= 1) addMsg(`❌ Questions sheet "${config.SHEET_NAME}" is empty or only has headers.`, true);
-        else {
-          addMsg('✅ Questions sheet has data.');
-          const headers = data[0].map(h => String(h).trim());
-          const reqH = [COL_QUESTION_TEXT, COL_CORRECT_ANSWER, COL_ID]; // Option columns checked within createQuizInCanvas for MC
-          const missingH = reqH.filter(h => !headers.includes(h));
-          if (missingH.length > 0) addMsg(`❌ Questions sheet "${config.SHEET_NAME}" missing: ${missingH.join(', ')}.`, true);
-          else addMsg('✅ Critical columns present in questions sheet.');
-        }
-      }
-
-      if (!valErrs && config.CANVAS_API_URL && config.CANVAS_API_TOKEN && config.COURSE_ID) { 
-        const testUrl = `${config.CANVAS_API_URL}/api/v1/courses/${config.COURSE_ID}`;
-        const testOptions = {method:'get', headers:{'Authorization':`Bearer ${config.CANVAS_API_TOKEN}`}, muteHttpExceptions:true};
-        const testResp = UrlFetchApp.fetch(testUrl, testOptions);
-        if (testResp.getResponseCode() === 200) addMsg('✅ Canvas API connection and Course ID seem valid.');
-        else addMsg(`❌ Canvas API/Course ID invalid. Status: ${testResp.getResponseCode()}. Resp: ${testResp.getContentText().substring(0, 70)}...`, true);
-      } else if (!valErrs) {
-        addMsg('❌ Canvas API details incomplete; connection not tested.', true);
-      }
-    } catch (configValidationError) { 
-      addMsg(`❌ CRITICAL SETUP ERROR: ${configValidationError.message}`, true); 
-      Logger.log(`Validation/Config Error in runQuizCreation: ${configValidationError.stack}`); 
+    const { valid, messages, config, sheet } = validateQuizSetup();
+    if (messages.length > 0) {
+      showStandardDialog('Canvas Quiz Setup Validation', buildSummaryMessage(messages));
     }
-
-    if (valMsgs.length > 0) {
-      showStandardDialog('Canvas Quiz Setup Validation', buildSummaryMessage(valMsgs));
-    }
-    if (valErrs) { Logger.log("Canvas Quiz creation aborted due to validation errors."); return; }
+    if (!valid) { Logger.log("Canvas Quiz creation aborted due to validation errors."); return; }
 
     const userConfirmation = ui.alert('Create Quiz on Canvas', `Proceed to create quiz "${config.QUIZ_TITLE}" on Canvas using questions from "${config.SHEET_NAME}"?\nQuiz will be UNPUBLISHED.`, ui.ButtonSet.YES_NO);
-
     if (userConfirmation === ui.Button.YES) {
-      if (!qSheet) qSheet = ss.getSheetByName(config.SHEET_NAME); // Re-fetch just in case
+      const qSheet = sheet || ss.getSheetByName(config.SHEET_NAME);
       if (!qSheet) throw new Error("Question sheet became unavailable after validation.");
       showProgressToast(`Initiating creation of quiz: "${config.QUIZ_TITLE}"...`, 'Canvas Quiz Creator', 7);
       createQuizInCanvas(config, qSheet);
     } else {
       showStandardDialog('Cancelled', 'Canvas quiz creation was cancelled by the user.');
     }
-  } catch (runtimeError) { 
+  } catch (runtimeError) {
     showStandardDialog('Error During Canvas Quiz Creation', `Runtime error: ${runtimeError.message}\nCheck script logs.`);
     Logger.log(`Error in runQuizCreation (runtime): ${runtimeError.toString()}\n${runtimeError.stack}`);
   }

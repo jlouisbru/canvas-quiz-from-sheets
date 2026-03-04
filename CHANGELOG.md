@@ -6,6 +6,24 @@ All notable changes to **Canvas Quiz Creator for Google Sheets** will be documen
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-03-04
+
+### Added
+
+-   **Configurable Quiz Type:** New optional `QUIZ_TYPE` parameter in `CanvasQuiz_Config` supports all Canvas quiz types: `assignment` (default), `practice_quiz`, `graded_survey`, and `survey`. Invalid values are caught with a clear error message.
+-   **API Rate Limit Handling:** Canvas API calls now automatically retry on 429 (rate limit) and 503 (server error) responses with exponential backoff (1 s, 2 s, 4 s), making large quiz uploads significantly more reliable.
+
+### Improved
+
+-   **Progress Toasts:** Progress toast notifications and summary dialogs are now properly displayed during quiz creation (previously defined but inactive).
+-   **Code Refactoring:** Extracted `buildMCAnswers` and `resolveQuestion` helper functions to eliminate duplicated logic and improve readability.
+
+### Fixed
+
+-   **Performance:** `SpreadsheetApp.flush()` was being called on every question iteration; it is now called once after the loop, eliminating unnecessary sync overhead.
+-   **Dead Code Removed:** Removed a question-name update block that made a redundant Canvas API PUT request on every successfully added question.
+-   **Config Parsing:** Removed a fragile numeric auto-cast in config value parsing that could silently coerce string parameters (e.g., `COURSE_ID`, quiz titles) if they happened to look numeric. All numeric parameters (`POINTS_*`) are now explicitly converted.
+
 ## [1.0.0] - 2025-05-25
 
 ### Added

@@ -259,6 +259,96 @@ function runShuffleQuestions() {
 // All functions related to Doc Exam Creator were here.
 
 // ========= CANVAS QUIZ CREATOR MODULE =========
+
+/**
+ * Wraps UrlFetchApp.fetch with automatic retry on rate-limit (429) or
+ * temporary server errors (503). Waits 1 s, 2 s, 4 s between attempts.
+ */
+function canvasFetchWithRetry(url, opts, maxRetries) {
+  maxRetries = maxRetries || 3;
+  let resp;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    resp = UrlFetchApp.fetch(url, opts);
+    const code = resp.getResponseCode();
+    if (code !== 429 && code !== 503) return resp;
+    if (attempt < maxRetries) {
+      const delay = Math.pow(2, attempt - 1) * 1000;
+      Logger.log(`Canvas API rate limited (${code}), attempt ${attempt}/${maxRetries}. Retrying in ${delay}ms...`);
+      Utilities.sleep(delay);
+    }
+  }
+  return resp;
+}
+
+/**
+ * Builds the answers payload array for a multiple-choice or multiple-answers question.
+ * Returns an array of { text, weight } objects for any non-empty option slots.
+ */
+function buildMCAnswers(row, cols, correctAnswers, questionType) {
+  const optionSlots = [
+    { letter: 'A', index: cols.a }, { letter: 'B', index: cols.b },
+    { letter: 'C', index: cols.c }, { letter: 'D', index: cols.d },
+    { letter: 'E', index: cols.e }, { letter: 'F', index: cols.f }
+  ];
+  return optionSlots
+    .filter(slot => slot.index !== -1 && row.length > slot.index && row[slot.index] != null && String(row[slot.index]).trim() !== "")
+    .map(slot => {
+      let weight = 0;
+      if (questionType === 'multiple_answers_question') {
+        if (correctAnswers.includes(slot.letter)) weight = 100 / Math.max(1, correctAnswers.length);
+      } else {
+        if (correctAnswers.includes(slot.letter)) weight = 100;
+      }
+      return { text: String(row[slot.index]).trim(), weight };
+    });
+}
+
+/**
+ * Determines the Canvas question type, point value, and answers for one row.
+ * Returns { canvasQuestionType, questionPoints, answers } or null if the question
+ * should be skipped (error already pushed to questionsWithErrors).
+ */
+function resolveQuestion(row, cols, questionId, correctAnswerFromSheet, config, rowNum, questionsWithErrors, qText) {
+  if (questionId.startsWith("ES")) {
+    return { canvasQuestionType: 'essay_question', questionPoints: config.POINTS_PER_QUESTION_ES, answers: [] };
+  }
+
+  if (questionId.startsWith("TF")) {
+    let answers;
+    if (correctAnswerFromSheet === "TRUE") {
+      answers = [{ text: "True", weight: 100 }, { text: "False", weight: 0 }];
+    } else if (correctAnswerFromSheet === "FALSE") {
+      answers = [{ text: "True", weight: 0 }, { text: "False", weight: 100 }];
+    } else {
+      Logger.log(`ERROR for TF Question ID "${questionId}" (Row ${rowNum + 1}): Correct answer is "${correctAnswerFromSheet}", expected "TRUE" or "FALSE".`);
+      questionsWithErrors.push(`Sheet Row ${rowNum + 1} (TF "${qText.substring(0, 15)}..."): Invalid correct answer: '${correctAnswerFromSheet}'.`);
+      answers = [{ text: "True", weight: 0 }, { text: "False", weight: 0 }];
+    }
+    return { canvasQuestionType: 'true_false_question', questionPoints: config.POINTS_PER_QUESTION_TF, answers };
+  }
+
+  const isMC = questionId.startsWith("MC");
+  const correctAnswers = correctAnswerFromSheet.split(',').map(l => l.trim()).filter(l => l);
+  const canvasQuestionType = correctAnswers.length > 1 ? 'multiple_answers_question' : 'multiple_choice_question';
+  const questionPoints = isMC ? config.POINTS_PER_QUESTION_MC : config.POINTS_PER_QUESTION_DEFAULT;
+
+  if (!isMC) {
+    Logger.log(`ID "${questionId}" (Row ${rowNum + 1}) not TF/MC/ES. Treating as ${canvasQuestionType}, Points: ${questionPoints}`);
+  }
+
+  const answers = buildMCAnswers(row, cols, correctAnswers, canvasQuestionType);
+  if (answers.length === 0) {
+    Logger.log(`Skipping Q (Row ${rowNum + 1}, "${qText.substring(0, 20)}..."): No valid options found.`);
+    questionsWithErrors.push(`Sheet Row ${rowNum + 1} ("${qText.substring(0, 15)}..."): Skipped - No options for ${canvasQuestionType}.`);
+    return null;
+  }
+  if (isMC && questionPoints > 0 && answers.every(ans => ans.weight === 0) && correctAnswers.length > 0 && correctAnswers[0] !== "") {
+    Logger.log(`Warning MC/MA Q (Row ${rowNum + 1}, "${qText.substring(0, 20)}..."): Correct "${correctAnswers.join(',')}" specified but no option matched.`);
+  }
+
+  return { canvasQuestionType, questionPoints, answers };
+}
+
 function getCanvasQuizModuleConfig() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const configSheet = ss.getSheetByName(SHEET_CANVAS_QUIZ_CONFIG);
@@ -296,16 +386,8 @@ function getCanvasQuizModuleConfig() {
         const lowerVal = value.toLowerCase();
         if (lowerVal === 'true') value = true;
         else if (lowerVal === 'false') value = false;
-        else if (value.trim() !== '' && !isNaN(value) &&
-                 parameter !== 'COURSE_ID' && 
-                 !parameter.endsWith('_URL') && 
-                 !parameter.endsWith('_TOKEN') && 
-                 parameter !== PROP_CANVAS_API_TOKEN &&
-                 !parameter.startsWith('QUIZ_TITLE') && 
-                 !parameter.startsWith('SHEET_NAME') 
-                 ) { 
-          value = Number(value);
-        }
+        // Numeric parameters (POINTS_*) are explicitly converted via parseFloat below.
+        // No auto-cast here to avoid silently coercing string IDs or titles that happen to be numeric.
       }
       config[parameter] = value;
     }
@@ -353,220 +435,154 @@ function getCanvasQuizModuleConfig() {
   } else {
       if (!(optionalPointDefault in config) || config[optionalPointDefault] == null || String(config[optionalPointDefault]).trim() === "") {
           Logger.log(`"${optionalPointDefault}" not found or is blank in config. Defaulting to 1 point for unmatched question types.`);
-          config[optionalPointDefault] = 1; 
+          config[optionalPointDefault] = 1;
       }
   }
+
+  const validQuizTypes = ['assignment', 'practice_quiz', 'graded_survey', 'survey'];
+  const quizTypeRaw = config.QUIZ_TYPE ? String(config.QUIZ_TYPE).trim().toLowerCase() : '';
+  if (!quizTypeRaw) {
+    config.QUIZ_TYPE = 'assignment';
+  } else if (!validQuizTypes.includes(quizTypeRaw)) {
+    throw new Error(`Invalid QUIZ_TYPE "${config.QUIZ_TYPE}" in "${SHEET_CANVAS_QUIZ_CONFIG}". Must be one of: ${validQuizTypes.join(', ')}.`);
+  } else {
+    config.QUIZ_TYPE = quizTypeRaw;
+  }
+
   return config;
 }
 
 function createQuizInCanvas(config, sheet) {
-  const quizData = sheet.getDataRange().getValues(), questionRows = quizData.slice(1);
+  const quizData = sheet.getDataRange().getValues();
+  const questionRows = quizData.slice(1);
   const headers = quizData[0].map(h => String(h).trim());
   const cols = {
-      q: headers.indexOf(COL_QUESTION_TEXT), 
-      correct: headers.indexOf(COL_CORRECT_ANSWER),
-      id: headers.indexOf(COL_ID),
-      a: headers.indexOf(COL_OPTION_A), b: headers.indexOf(COL_OPTION_B), 
-      c: headers.indexOf(COL_OPTION_C), d: headers.indexOf(COL_OPTION_D),
-      e: headers.indexOf(COL_OPTION_E), f: headers.indexOf(COL_OPTION_F)
+    q:       headers.indexOf(COL_QUESTION_TEXT),
+    correct: headers.indexOf(COL_CORRECT_ANSWER),
+    id:      headers.indexOf(COL_ID),
+    a: headers.indexOf(COL_OPTION_A), b: headers.indexOf(COL_OPTION_B),
+    c: headers.indexOf(COL_OPTION_C), d: headers.indexOf(COL_OPTION_D),
+    e: headers.indexOf(COL_OPTION_E), f: headers.indexOf(COL_OPTION_F)
   };
-
   if ([cols.q, cols.correct, cols.id].some(idx => idx === -1)) {
-      throw new Error(`Sheet "${config.SHEET_NAME}" missing required columns (ID, Question Text, Correct Answer).`);
+    throw new Error(`Sheet "${config.SHEET_NAME}" missing required columns (ID, Question Text, Correct Answer).`);
   }
-  
-  const placeholderTotalPts = 0; 
-  const quizUrl = `${config.CANVAS_API_URL}/api/v1/courses/${config.COURSE_ID}/quizzes`;
-  const quizPayloadShell = { 
-      'quiz[title]': config.QUIZ_TITLE, 
-      'quiz[quiz_type]': 'assignment', 
-      'quiz[points_possible]': placeholderTotalPts, 
-      'quiz[published]': false 
-  };
-  const quizOpts = {method: 'post', headers: {'Authorization': `Bearer ${config.CANVAS_API_TOKEN}`}, payload: quizPayloadShell, muteHttpExceptions: true};
-  const quizResp = UrlFetchApp.fetch(quizUrl, quizOpts);
 
+  // --- Create the quiz shell ---
+  const authHeader = { 'Authorization': `Bearer ${config.CANVAS_API_TOKEN}` };
+  const quizUrl = `${config.CANVAS_API_URL}/api/v1/courses/${config.COURSE_ID}/quizzes`;
+  const quizResp = canvasFetchWithRetry(quizUrl, {
+    method: 'post',
+    headers: authHeader,
+    payload: {
+      'quiz[title]': config.QUIZ_TITLE,
+      'quiz[quiz_type]': config.QUIZ_TYPE,
+      'quiz[points_possible]': 0,
+      'quiz[published]': false
+    },
+    muteHttpExceptions: true
+  });
   if (quizResp.getResponseCode() >= 300) {
-    const errorMsg = `Failed to create quiz shell for "${config.QUIZ_TITLE}".\nStatus: ${quizResp.getResponseCode()}.\nResponse: ${quizResp.getContentText().substring(0,200)}`;
-    // showStandardDialog('Canvas Quiz Creation Error', errorMsg); // Assuming UiUtils.gs
-    SpreadsheetApp.getUi().alert('Canvas Quiz Creation Error', errorMsg, SpreadsheetApp.getUi().ButtonSet.OK);
+    const errorMsg = `Failed to create quiz shell for "${config.QUIZ_TITLE}".\nStatus: ${quizResp.getResponseCode()}.\nResponse: ${quizResp.getContentText().substring(0, 200)}`;
+    showStandardDialog('Canvas Quiz Creation Error', errorMsg);
     throw new Error(errorMsg.replace(/\n/g, ' '));
   }
   const quiz = JSON.parse(quizResp.getContentText());
   const quizCanvasId = quiz.id;
   const quizEditUrl = `${config.CANVAS_API_URL}/courses/${config.COURSE_ID}/quizzes/${quizCanvasId}/edit`;
 
-  let questionSheetRowNum = 0, successfulAdds = 0;
-  let currentQuizTotalPoints = 0;
+  // --- Add questions ---
+  let questionSheetRowNum = 0, successfulAdds = 0, currentQuizTotalPoints = 0;
   const questionsWithErrors = [];
   const totalQuestionsToProcess = questionRows.length;
+  const qAddUrl = `${config.CANVAS_API_URL}/api/v1/courses/${config.COURSE_ID}/quizzes/${quizCanvasId}/questions`;
 
   for (const row of questionRows) {
     questionSheetRowNum++;
-    // if (questionSheetRowNum % 5 === 0 || questionSheetRowNum === totalQuestionsToProcess) {
-    //     showProgressToast(`Processing question ${questionSheetRowNum} of ${totalQuestionsToProcess} for "${config.QUIZ_TITLE}"...`, 'Canvas Quiz Progress', 3); // Assuming UiUtils.gs
-    // }
+    if (questionSheetRowNum % 5 === 0 || questionSheetRowNum === totalQuestionsToProcess) {
+      showProgressToast(`Processing question ${questionSheetRowNum} of ${totalQuestionsToProcess} for "${config.QUIZ_TITLE}"...`, 'Canvas Quiz Progress', 3);
+    }
 
     const qText = row[cols.q]?.toString().trim();
     if (!qText) {
-        questionsWithErrors.push(`Sheet Row ${questionSheetRowNum+1}: Skipped - Empty question text.`);
-        continue;
+      questionsWithErrors.push(`Sheet Row ${questionSheetRowNum + 1}: Skipped - Empty question text.`);
+      continue;
     }
 
     const questionId = row[cols.id]?.toString().trim().toUpperCase() || "";
     const rawCorrectAnswer = row[cols.correct];
-    
-    let correctAnswerFromSheet;
-    if (typeof rawCorrectAnswer === 'boolean') {
-        correctAnswerFromSheet = String(rawCorrectAnswer).toUpperCase(); 
-    } else {
-        correctAnswerFromSheet = String(rawCorrectAnswer || "").trim().toUpperCase();
-    }
-    
-    let questionPoints = 0;
-    let canvasQuestionType = ''; 
-    let answersPayloadForCanvas = [];
+    const correctAnswerFromSheet = typeof rawCorrectAnswer === 'boolean'
+      ? String(rawCorrectAnswer).toUpperCase()
+      : String(rawCorrectAnswer || "").trim().toUpperCase();
 
-    if (questionId.startsWith("ES")) {
-        canvasQuestionType = 'essay_question';
-        questionPoints = config.POINTS_PER_QUESTION_ES;
-    } else if (questionId.startsWith("TF")) {
-        canvasQuestionType = 'true_false_question';
-        questionPoints = config.POINTS_PER_QUESTION_TF;
-        if (correctAnswerFromSheet === "TRUE") {
-            answersPayloadForCanvas.push({ text: "True",  weight: 100 });
-            answersPayloadForCanvas.push({ text: "False", weight: 0 });
-        } else if (correctAnswerFromSheet === "FALSE") {
-            answersPayloadForCanvas.push({ text: "True",  weight: 0 });
-            answersPayloadForCanvas.push({ text: "False", weight: 100 });
-        } else {
-            Logger.log(`ERROR for TF Question ID "${questionId}" (Row ${questionSheetRowNum+1}): Correct answer is "${correctAnswerFromSheet}", which is not "TRUE" or "FALSE".`);
-            questionsWithErrors.push(`Sheet Row ${questionSheetRowNum+1} (TF "${qText.substring(0,15)}..."): Invalid correct answer specified: '${correctAnswerFromSheet}'.`);
-            answersPayloadForCanvas.push({ text: "True",  weight: 0 }); 
-            answersPayloadForCanvas.push({ text: "False", weight: 0 });
-        }
-    } else if (questionId.startsWith("MC")) {
-        const mcCorrectAnswers = correctAnswerFromSheet.split(',').map(l => l.trim()).filter(l => l);
-        if (mcCorrectAnswers.length > 1) canvasQuestionType = 'multiple_answers_question';
-        else canvasQuestionType = 'multiple_choice_question';
-        questionPoints = config.POINTS_PER_QUESTION_MC;
-        const optionSlots = [ { letter: 'A', index: cols.a }, { letter: 'B', index: cols.b }, { letter: 'C', index: cols.c }, { letter: 'D', index: cols.d }, { letter: 'E', index: cols.e }, { letter: 'F', index: cols.f }];
-        optionSlots.forEach(slot => {
-          if (slot.index !== -1 && row.length > slot.index && row[slot.index] != null && String(row[slot.index]).trim() !== "") {
-            const optionText = String(row[slot.index]).trim();
-            let weight = 0;
-            if (canvasQuestionType === 'multiple_answers_question') {
-                if (mcCorrectAnswers.includes(slot.letter)) weight = 100 / Math.max(1, mcCorrectAnswers.length);
-            } else { 
-                if (mcCorrectAnswers.includes(slot.letter)) weight = 100;
-            }
-            answersPayloadForCanvas.push({text: optionText, weight: weight});
-          }
-        });
-         if (answersPayloadForCanvas.length === 0) { 
-            Logger.log(`Skipping MC/MA Q (Row ${questionSheetRowNum+1}, "${qText.substring(0,20)}..."): No valid options.`); 
-            questionsWithErrors.push(`Sheet Row ${questionSheetRowNum+1} ("${qText.substring(0,15)}..."): Skipped - No options for MC/MA.`);
-            continue; 
-        }
-        if (questionPoints > 0 && answersPayloadForCanvas.every(ans => ans.weight === 0) && mcCorrectAnswers.length > 0 && mcCorrectAnswers[0] !== "") {
-            Logger.log(`Warning MC/MA Q (Row ${questionSheetRowNum+1}, "${qText.substring(0,20)}..."): Correct "${mcCorrectAnswers.join(',')}" specified, but no option had weight.`);
-        }
-    } else { 
-        const defaultCorrectAnswers = correctAnswerFromSheet.split(',').map(l => l.trim()).filter(l => l);
-        if (defaultCorrectAnswers.length > 1) canvasQuestionType = 'multiple_answers_question';
-        else canvasQuestionType = 'multiple_choice_question';
-        questionPoints = config.POINTS_PER_QUESTION_DEFAULT;
-        Logger.log(`ID "${questionId}" (Row ${questionSheetRowNum+1}) not TF/MC/ES. Type: ${canvasQuestionType}, Points: ${questionPoints}`);
-        const optionSlots = [ { letter: 'A', index: cols.a }, { letter: 'B', index: cols.b }, { letter: 'C', index: cols.c }, { letter: 'D', index: cols.d }, { letter: 'E', index: cols.e }, { letter: 'F', index: cols.f }];
-        optionSlots.forEach(slot => {
-          if (slot.index !== -1 && row.length > slot.index && row[slot.index] != null && String(row[slot.index]).trim() !== "") {
-            const optionText = String(row[slot.index]).trim();
-            let weight = 0;
-            if (canvasQuestionType === 'multiple_answers_question') {
-                if (defaultCorrectAnswers.includes(slot.letter)) weight = 100 / Math.max(1, defaultCorrectAnswers.length);
-            } else { 
-                if (defaultCorrectAnswers.includes(slot.letter)) weight = 100;
-            }
-            answersPayloadForCanvas.push({text: optionText, weight: weight});
-          }
-        });
-         if (answersPayloadForCanvas.length === 0 && canvasQuestionType !== 'essay_question') { 
-            Logger.log(`Skipping Default Q (Row ${questionSheetRowNum+1}, "${qText.substring(0,20)}..."): No valid options.`); 
-            questionsWithErrors.push(`Sheet Row ${questionSheetRowNum+1} ("${qText.substring(0,15)}..."): Skipped - No options for Default type.`);
-            continue; 
-        }
-    }
+    const resolved = resolveQuestion(row, cols, questionId, correctAnswerFromSheet, config, questionSheetRowNum, questionsWithErrors, qText);
+    if (!resolved) continue;
 
-    if (questionPoints === undefined || questionPoints === null) {
-        Logger.log(`Error: Points undefined for ID "${questionId}" (Row ${questionSheetRowNum+1}). Skipping.`);
-        questionsWithErrors.push(`Sheet Row ${questionSheetRowNum+1} ("${qText.substring(0,15)}..."): Points undefined for type.`);
-        continue;
-    }
-    
+    const { canvasQuestionType, questionPoints, answers } = resolved;
     const questionAPIPayload = {
-        'question[question_name]': `Question ${successfulAdds + 1}`, 
-        'question[question_text]': qText, 
-        'question[question_type]': canvasQuestionType, 
-        'question[points_possible]': questionPoints
+      'question[question_name]': `Question ${successfulAdds + 1}`,
+      'question[question_text]': qText,
+      'question[question_type]': canvasQuestionType,
+      'question[points_possible]': questionPoints
     };
 
-    if (answersPayloadForCanvas.length > 0) { 
-        answersPayloadForCanvas.forEach((ans, idx) => { 
-            questionAPIPayload[`question[answers][${idx}][answer_text]`] = ans.text; 
-            questionAPIPayload[`question[answers][${idx}][answer_weight]`] = ans.weight;
-        });
+    if (answers.length > 0) {
+      answers.forEach((ans, idx) => {
+        questionAPIPayload[`question[answers][${idx}][answer_text]`] = ans.text;
+        questionAPIPayload[`question[answers][${idx}][answer_weight]`] = ans.weight;
+      });
     } else if (canvasQuestionType !== 'essay_question') {
-        Logger.log(`Error Q (Row ${questionSheetRowNum+1}, "${qText.substring(0,20)}..."): Type ${canvasQuestionType} but answersPayloadForCanvas empty. Skipping.`);
-        questionsWithErrors.push(`Sheet Row ${questionSheetRowNum+1} ("${qText.substring(0,15)}..."): Error - ${canvasQuestionType} empty answers payload.`);
-        continue;
+      Logger.log(`Error Q (Row ${questionSheetRowNum + 1}, "${qText.substring(0, 20)}..."): ${canvasQuestionType} has empty answers. Skipping.`);
+      questionsWithErrors.push(`Sheet Row ${questionSheetRowNum + 1} ("${qText.substring(0, 15)}..."): Error - ${canvasQuestionType} empty answers payload.`);
+      continue;
     }
-    
-    const qAddUrl = `${config.CANVAS_API_URL}/api/v1/courses/${config.COURSE_ID}/quizzes/${quizCanvasId}/questions`;
-    const qAddOpts = {method:'post', headers:{'Authorization':`Bearer ${config.CANVAS_API_TOKEN}`}, payload:questionAPIPayload, muteHttpExceptions:true};
-    const qAddResp = UrlFetchApp.fetch(qAddUrl, qAddOpts); 
-    
-    if (qAddResp.getResponseCode()>=300) {
-        const errorDetail = `Failed to add Q (Row ${questionSheetRowNum+1}, "${qText.substring(0,15)}...", Type: ${canvasQuestionType}). Status ${qAddResp.getResponseCode()}.`;
-        Logger.log(`${errorDetail} Canvas Response: ${qAddResp.getContentText().substring(0,300)} Payload Sent (partial): ${JSON.stringify(questionAPIPayload).substring(0,300)}`);
-        questionsWithErrors.push(errorDetail);
+
+    const qAddResp = canvasFetchWithRetry(qAddUrl, { method: 'post', headers: authHeader, payload: questionAPIPayload, muteHttpExceptions: true });
+    if (qAddResp.getResponseCode() >= 300) {
+      const errorDetail = `Failed to add Q (Row ${questionSheetRowNum + 1}, "${qText.substring(0, 15)}...", Type: ${canvasQuestionType}). Status ${qAddResp.getResponseCode()}.`;
+      Logger.log(`${errorDetail} Canvas Response: ${qAddResp.getContentText().substring(0, 300)} Payload (partial): ${JSON.stringify(questionAPIPayload).substring(0, 300)}`);
+      questionsWithErrors.push(errorDetail);
     } else {
-        successfulAdds++;
-        currentQuizTotalPoints += questionPoints;
-        const addedQuestionCanvasId = JSON.parse(qAddResp.getContentText()).id;
-        if ((successfulAdds) !== parseInt(questionAPIPayload['question[question_name]'].split(' ')[1])) {
-            const updateQNamePayload = {'question[question_name]': `Question ${successfulAdds}`};
-            const qUpdateUrl = `${config.CANVAS_API_URL}/api/v1/courses/${config.COURSE_ID}/quizzes/${quizCanvasId}/questions/${addedQuestionCanvasId}`;
-            UrlFetchApp.fetch(qUpdateUrl, {method:'put', headers:{'Authorization':`Bearer ${config.CANVAS_API_TOKEN}`}, payload:updateQNamePayload, muteHttpExceptions:true});
-        }
+      successfulAdds++;
+      currentQuizTotalPoints += questionPoints;
     }
-    SpreadsheetApp.flush();
+  }
+  SpreadsheetApp.flush();
+
+  // --- Update quiz total points ---
+  if (quiz.points_possible !== currentQuizTotalPoints) {
+    Logger.log(`Updating quiz total points from ${quiz.points_possible} to ${currentQuizTotalPoints}.`);
+    const updateResp = canvasFetchWithRetry(`${quizUrl}/${quizCanvasId}`, {
+      method: 'put',
+      headers: authHeader,
+      payload: { 'quiz[points_possible]': currentQuizTotalPoints },
+      muteHttpExceptions: true
+    });
+    if (updateResp.getResponseCode() >= 300) {
+      Logger.log(`Failed to update quiz total points. Status: ${updateResp.getResponseCode()}. Resp: ${updateResp.getContentText().substring(0, 100)}`);
+    } else {
+      Logger.log(`Quiz total points updated to ${currentQuizTotalPoints}.`);
+    }
   }
 
-  if (quiz.points_possible !== currentQuizTotalPoints) { 
-    Logger.log(`Quiz shell points: ${quiz.points_possible}. Calculated successful adds points: ${currentQuizTotalPoints}. Updating.`);
-    const updatePayload = {'quiz[points_possible]': currentQuizTotalPoints};
-    const updateResp = UrlFetchApp.fetch(`${quizUrl}/${quizCanvasId}`,{method:'put',headers:{'Authorization':`Bearer ${config.CANVAS_API_TOKEN}`},payload:updatePayload,muteHttpExceptions:true});
-    if (updateResp.getResponseCode() >= 300) Logger.log(`Failed to update quiz total points to ${currentQuizTotalPoints}. Status: ${updateResp.getResponseCode()}. Resp: ${updateResp.getContentText().substring(0,100)}`);
-    else Logger.log(`Quiz total points updated to ${currentQuizTotalPoints}.`);
-  }
-  
-  const summaryItems = [];
-  summaryItems.push(`Canvas Quiz Creation for "${config.QUIZ_TITLE}" (ID: ${quizCanvasId}) Processed.`);
-  summaryItems.push(`- Total questions from sheet: ${totalQuestionsToProcess}`);
-  summaryItems.push(`- Successfully added to Canvas: ${successfulAdds}`);
+  // --- Show summary ---
+  const summaryItems = [
+    `Canvas Quiz Creation for "${config.QUIZ_TITLE}" (ID: ${quizCanvasId}) Processed.`,
+    `- Total questions from sheet: ${totalQuestionsToProcess}`,
+    `- Successfully added to Canvas: ${successfulAdds}`
+  ];
   if (questionsWithErrors.length > 0) {
-    summaryItems.push(`- Questions with issues: ${questionsWithErrors.length}`);
-    summaryItems.push("\nDetails of issues (first few):");
+    summaryItems.push(`- Questions with issues: ${questionsWithErrors.length}`, "\nDetails of issues (first few):");
     questionsWithErrors.slice(0, 5).forEach(err => summaryItems.push(`  - ${err}`));
     if (questionsWithErrors.length > 5) summaryItems.push("  - ... (see logs for all errors)");
   }
-  summaryItems.push(`\nThe quiz is UNPUBLISHED. Final points: ${currentQuizTotalPoints}.`);
-  summaryItems.push("\nTo edit the quiz, copy and paste this URL:");
-  summaryItems.push(`${quizEditUrl}`);
-  summaryItems.push("\nCheck Script Logs for full details.");
-
-  // showStandardDialog('Canvas Quiz Creation Summary', buildSummaryMessage(summaryItems)); // Assuming UiUtils.gs
-  SpreadsheetApp.getUi().alert('Canvas Quiz Creation Summary', summaryItems.join('\n'), SpreadsheetApp.getUi().ButtonSet.OK);
+  summaryItems.push(
+    `\nThe quiz is UNPUBLISHED. Final points: ${currentQuizTotalPoints}.`,
+    "\nTo edit the quiz, copy and paste this URL:",
+    quizEditUrl,
+    "\nCheck Script Logs for full details."
+  );
+  showStandardDialog('Canvas Quiz Creation Summary', buildSummaryMessage(summaryItems));
   Logger.log(`Canvas quiz creation: ${successfulAdds} of ${questionRows.length} rows processed. ${successfulAdds} questions added to quiz ID ${quizCanvasId}. Total points: ${currentQuizTotalPoints}.`);
 }
 
@@ -576,8 +592,8 @@ function runQuizCreation() {
   let valErrs=false, config, qSheet; 
 
   try {
-    // showProgressToast('Starting Canvas Quiz setup validation...', 'Canvas Quiz'); // Assuming UiUtils.gs
-    try { 
+    showProgressToast('Starting Canvas Quiz setup validation...', 'Canvas Quiz');
+    try {
       config = getCanvasQuizModuleConfig(); 
       addMsg('✅ CanvasQuiz_Config processed.'); 
       
@@ -612,8 +628,7 @@ function runQuizCreation() {
     }
 
     if (valMsgs.length > 0) {
-      // showStandardDialog('Canvas Quiz Setup Validation', buildSummaryMessage(valMsgs)); // Assuming UiUtils.gs
-      ui.alert('Canvas Quiz Setup Validation', valMsgs.join('\n'), ui.ButtonSet.OK);
+      showStandardDialog('Canvas Quiz Setup Validation', buildSummaryMessage(valMsgs));
     }
     if (valErrs) { Logger.log("Canvas Quiz creation aborted due to validation errors."); return; }
 
@@ -622,15 +637,13 @@ function runQuizCreation() {
     if (userConfirmation === ui.Button.YES) {
       if (!qSheet) qSheet = ss.getSheetByName(config.SHEET_NAME); // Re-fetch just in case
       if (!qSheet) throw new Error("Question sheet became unavailable after validation.");
-      // showProgressToast(`Initiating creation of quiz: "${config.QUIZ_TITLE}"...`, 'Canvas Quiz Creator', 7); // Assuming UiUtils.gs
-      createQuizInCanvas(config, qSheet); 
+      showProgressToast(`Initiating creation of quiz: "${config.QUIZ_TITLE}"...`, 'Canvas Quiz Creator', 7);
+      createQuizInCanvas(config, qSheet);
     } else {
-      // showStandardDialog('Cancelled', 'Canvas quiz creation was cancelled by the user.'); // Assuming UiUtils.gs
-      ui.alert('Cancelled', 'Canvas quiz creation was cancelled.', ui.ButtonSet.OK);
+      showStandardDialog('Cancelled', 'Canvas quiz creation was cancelled by the user.');
     }
   } catch (runtimeError) { 
-    // showStandardDialog('Error During Canvas Quiz Creation', `Runtime error: ${runtimeError.message}\nCheck script logs.`); // Assuming UiUtils.gs
-    ui.alert('Error During Canvas Quiz Creation', `Runtime error: ${runtimeError.message}\nCheck script logs.`, ui.ButtonSet.OK);
+    showStandardDialog('Error During Canvas Quiz Creation', `Runtime error: ${runtimeError.message}\nCheck script logs.`);
     Logger.log(`Error in runQuizCreation (runtime): ${runtimeError.toString()}\n${runtimeError.stack}`);
   }
 }

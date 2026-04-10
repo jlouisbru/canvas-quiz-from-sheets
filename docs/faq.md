@@ -26,7 +26,7 @@ Your Course ID is a number that appears in the URL when you are viewing your cou
 The script will prompt you for this token if it's not found in the `CanvasQuiz_Config` sheet or your Script Properties. It will then store it securely in your Script Properties.
 
 ### What permissions does the script need when I first run it?
-When you first run a function from the "Extra Menu," Google will ask for authorization. The script needs permission to:
+When you first run a function from the "Quiz Tools," Google will ask for authorization. The script needs permission to:
 *   **View and manage your spreadsheets in Google Drive:** To read your configuration sheets (`SelectQuestions_Config`, `CanvasQuiz_Config`), your question bank sheets, and to write to/clear the `Selected Questions` sheet.
 *   **Connect to an external service:** This is required to communicate with the Canvas API to create quizzes in your Canvas course.
 *   **Display and run third-party web content in prompts and sidebars:** Used for displaying `toast` messages (brief notifications) and dialogs (like the summary pop-ups).
@@ -35,11 +35,11 @@ The code is open-source on GitHub, so you can review what it does. By making a c
 ## 🛠️ Usage Questions
 
 ### How do I select which questions go into a Canvas quiz?
-The process involves two main steps using the "Extra Menu":
+The process involves two main steps using the "Quiz Tools":
 1.  **Configure `SelectQuestions_Config`:** Specify which of your "Question Bank Sheets" (e.g., "TF", "MC") to use, how many questions to pull from each, filter by lecture range, etc.
-2.  Run **Extra Menu > Select Questions**. This action reads your configurations and populates the `Selected Questions` sheet with a random selection of questions.
+2.  Run **Quiz Tools > Select Questions**. This action reads your configurations and populates the `Selected Questions` sheet with a random selection of questions.
 3.  **Configure `CanvasQuiz_Config`:** Set your Canvas URL, Course ID, desired Quiz Title, and points per question type. Ensure the `SHEET_NAME` parameter points to `Selected Questions` (or whichever sheet holds the questions you want to upload).
-4.  Run **Extra Menu > Create Quiz on Canvas**. This takes the questions from the specified sheet and builds the quiz in Canvas.
+4.  Run **Quiz Tools > Create Quiz on Canvas**. This takes the questions from the specified sheet and builds the quiz in Canvas.
 
 ### Can I use this tool for multiple Canvas courses?
 Yes. The most straightforward way is to have a separate copy of this Google Spreadsheet for each Canvas course. This keeps the `CanvasQuiz_Config` (especially the `COURSE_ID`) distinct for each course.

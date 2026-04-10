@@ -27,19 +27,35 @@ Click the button above to create your own copy of the Canvas Tools template
     *   Supports different point values per question type (TF, MC, ES, Default).
     *   Handles True/False, Multiple Choice, Multiple Answers, and Essay question types in Canvas.
     *   Creates quizzes as **UNPUBLISHED**, allowing for review before student access.
+    *   **Execution timeout recovery:** if the Apps Script 6-minute limit is hit mid-run, re-running the menu item prompts to resume from the last processed question.
+    *   **Orphan quiz cleanup:** if a fatal error occurs after the quiz shell is created, a dialog offers to automatically delete the incomplete quiz.
 *   **User-Friendly Interface:**
-    *   Custom menu within Google Sheets for easy operation.
+    *   Custom `Quiz Tools` menu within Google Sheets for easy operation.
     *   Configuration driven through dedicated sheets (`SelectQuestions_Config`, `CanvasQuiz_Config`).
-    *   Progress indicators and completion summaries.
+    *   Adaptive progress toasts and a clickable summary dialog linking directly to the Canvas quiz editor.
+    *   API token auto-masked in the sheet (`•••••`) once saved to Script Properties.
 *   **Instruction Sheet:** Includes a detailed "Instructions" tab within the spreadsheet for setup and usage guidance.
 
 ## 💾 Installation
 
-### Use the Template
+### Option A — Use the Template (recommended)
 
 1. [Open the template spreadsheet](https://docs.google.com/spreadsheets/d/1mRXJ_Ei8BUdyw2S9E31uS_CtCJ58d1yxh3RnYdp6hQY/edit?usp=sharing)
 2. Go to **File > Make a copy**. Name your copy and save it to your Google Drive.
 3. Continue to the Setup section below
+
+### Option B — Deploy with clasp (developers)
+
+If you prefer to manage the script from the command line:
+
+```bash
+npm install -g @google/clasp
+clasp login
+git clone https://github.com/jlouisbru/canvas-quiz-from-sheets.git
+cd canvas-quiz-from-sheets
+# Edit .clasp.json and replace the scriptId with your own Apps Script project ID
+clasp push
+```
 
 ## 🔧 Setup
 
@@ -49,7 +65,7 @@ Click the button above to create your own copy of the Canvas Tools template
         *   `SelectQuestions_Config`
         *   `CanvasQuiz_Config`
 2.  **Initial Run & Authorization:**
-    *   The first time you run any function from the "Extra Menu" (e.g., "Select Questions"), Google will ask for authorization.
+    *   The first time you run any function from the "Quiz Tools" (e.g., "Select Questions"), Google will ask for authorization.
     *   Review the permissions carefully and grant them.
 3.  **Canvas API Token:**
     *   The first time you run "Create Quiz on Canvas", if a `CANVAS_API_TOKEN` is not found, you will be prompted to enter it.
@@ -68,16 +84,16 @@ Click the button above to create your own copy of the Canvas Tools template
 
 ## 🛠️ Usage
 
-Once set up, use the "Extra Menu" in your Google Sheet:
+Once set up, use the "Quiz Tools" in your Google Sheet:
 
 1.  **Select Questions:**
     *   Configure the `SelectQuestions_Config` sheet.
-    *   Run **Extra Menu > Select Questions**.
+    *   Run **Quiz Tools > Select Questions**.
     *   The `Selected Questions` sheet will be populated.
 2.  **Create Quiz on Canvas:**
     *   Ensure the `Selected Questions` sheet (or the sheet specified in `CanvasQuiz_Config`) has the questions you want.
     *   Configure the `CanvasQuiz_Config` sheet with your Canvas URL, Course ID, quiz title, and points.
-    *   Run **Extra Menu > Create Quiz on Canvas**.
+    *   Run **Quiz Tools > Create Quiz on Canvas**.
     *   A summary will appear. The quiz will be created as **UNPUBLISHED** in your Canvas course.
 
 ## 📊 Configuration Sheets Detailed

@@ -6,6 +6,27 @@ All notable changes to **Canvas Quiz Creator for Google Sheets** will be documen
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2026-04-10
+
+### Added
+
+-   **Execution Timeout Recovery:** Quiz creation now checkpoints progress after every question. If the Apps Script 6-minute execution limit is hit mid-run, re-running "Create Quiz on Canvas" prompts to resume from the last processed question rather than starting over.
+-   **Orphan Quiz Cleanup:** If a fatal error occurs after the quiz shell has been created in Canvas, a dialog offers to automatically delete the incomplete quiz, preventing blank quizzes from accumulating in your course.
+-   **Clickable Summary Dialog:** The quiz creation summary now shows a clickable "Open Quiz Editor in Canvas" link, replacing the plain-text alert.
+-   **clasp Deployment Support:** A `.clasp.json` and `appsscript.json` are now included, enabling `clasp push` for direct deployment from the command line.
+
+### Improved
+
+-   **API Token Auto-Masking:** When a `CANVAS_API_TOKEN` is found in the `CanvasQuiz_Config` sheet and saved to Script Properties, the cell is immediately replaced with `•••••` so the token is never left in plain text.
+-   **Adaptive Progress Toast:** Toast notifications now fire for every question during the first 10, then every 5 questions after — reducing notification noise on large uploads.
+-   **Non-Mutating `shuffleArray`:** The array shuffle now returns a new array instead of mutating the input, eliminating a subtle side-effect risk.
+-   **Clearer Selection Logic:** Variables `sel`/`rem` in `selectQuestionsPerLecture` renamed to `guaranteed`/`overflow`, with a block comment explaining the two-pass selection strategy.
+-   **Code Split into Focused Modules:** `CreateCanvasQuiz.gs` has been broken into five purpose-specific files — `Constants.gs`, `Config.gs`, `QuestionShuffler.gs`, `CanvasQuizCreator.gs`, and `Main.gs` — each under 300 lines.
+
+### Removed
+
+-   **Dead Code:** `buildSummaryMessage` helper function removed (replaced by `showHtmlSummaryDialog`).
+
 ## [1.0.1] - 2026-03-04
 
 ### Added

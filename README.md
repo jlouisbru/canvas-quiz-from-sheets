@@ -2,8 +2,8 @@
 
 This Google Apps Script project streamlines the process of selecting questions from various banks within a Google Sheet, and then uploading those selected questions to create quizzes directly in Canvas LMS.
 
-[![License](https://img.shields.io/github/license/jlouisbru/canvas-tools-for-sheets)](LICENSE)
-[![Latest Release](https://img.shields.io/github/v/release/jlouisbru/canvas-tools-for-sheets)](https://github.com/jlouisbru/canvas-tools-for-sheets/releases/latest)
+[![License](https://img.shields.io/github/license/jlouisbru/canvas-quiz-from-sheets)](LICENSE)
+[![Latest Release](https://img.shields.io/github/v/release/jlouisbru/canvas-quiz-from-sheets)](https://github.com/jlouisbru/canvas-quiz-from-sheets/releases/latest)
 [![Platform](https://img.shields.io/badge/platform-Google%20Sheets-green)](https://docs.google.com/spreadsheets/d/18ZggFU-2xBdbl3pVPY3dXR-U5DYdroxvYaZJXGcvIPA/edit?usp=sharing)
 [![Support on Ko-fi](https://img.shields.io/badge/Support-Ko--fi-ff5f5f)](https://ko-fi.com/louisfr)
 
